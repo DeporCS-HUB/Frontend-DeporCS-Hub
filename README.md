@@ -1,147 +1,80 @@
-# 🏆 Frontend DeporCS Hub
+# DeporCS Hub Frontend (Development)
 
-Antarmuka modern untuk **DeporCS Hub (Departemen Olahraga Hub)** — sistem informasi dan manajemen terpusat untuk memfasilitasi operasional organisasi olahraga secara efisien, terstruktur, dan real-time.
+Dashboard web untuk mengelola operasional Departemen Olahraga: program kerja, tugas, keuangan, inventaris, event, dan anggota tim.
 
-Frontend ini berperan sebagai pusat visualisasi dan interaksi untuk:
+## Fitur
 
-- monitoring **Program Kerja (Proker)**
-- pengelolaan **keuangan & RAB**
-- pelacakan **inventaris alat olahraga**
-- manajemen tugas harian melalui **Kanban Board**
+- Dashboard dengan statistik, grafik aktivitas, notifikasi, agenda, dan inventaris.
+- Manajemen program beserta status, PIC, progress, dan anggaran.
+- Kanban board dengan drag-and-drop untuk pengelolaan tugas.
+- Ringkasan budget, realisasi, transaksi, dan pengajuan dana.
+- Pencarian aset inventaris serta status ketersediaannya.
+- Kalender event dan informasi perizinan.
+- Tampilan organisasi, anggota tim, performa kehadiran, dan pengaturan workspace.
+- Sidebar responsif dengan navigasi mobile dan mode collapse.
 
-Didesain dengan gaya **Deep Ocean glassmorphism**, terinspirasi dari UI/UX *Persona 3 Reload*, agar pengalaman pengguna tetap clean, profesional, dan responsif di berbagai perangkat.
+## Teknologi
 
----
+- React 19 + Vite
+- React Router DOM 7
+- Recharts
+- Lucide React
+- ESLint
 
-## ✨ Fitur Utama
+## Prasyarat
 
-- **Dashboard Eksekutif**  
-  Menampilkan ringkasan metrik proker, anggaran, dan progress tugas secara real-time.
+- Node.js 20 atau versi LTS yang lebih baru
+- npm
 
-- **Manajemen Proker & Event**  
-  Pelacakan status acara, timeline kegiatan, dan alur perizinan dalam satu tampilan.
-
-- **Modul Keuangan (RAB)**  
-  Visualisasi alur pengajuan dana, pemasukan, dan pengeluaran per proker untuk mendukung efisiensi bendahara.
-
-- **Task Management (Kanban Board)**  
-  Papan tugas kolaboratif bergaya Notion untuk koordinasi antar staff.
-
-- **Manajemen Inventaris**  
-  Monitoring peminjaman, pengembalian, dan status aset olahraga.
-
-- **Role-based Access Awareness**  
-  Integrasi tampilan berbasis peran (Member/Staff) sesuai aturan akses dari backend/database.
-
----
-
-## 🛠️ Tech Stack
-
-- **Framework:** React.js
-- **Styling:** Tailwind CSS
-- **Deployment:** Vercel
-- **API Integration:** Node.js + Express.js backend (Render)
-- **Database/Auth (via backend):** PostgreSQL (Supabase) + Google OAuth
-
----
-
-## 📦 Prasyarat
-
-Sebelum menjalankan project frontend, pastikan sudah tersedia:
-
-- Node.js (disarankan versi LTS)
-- npm atau yarn
-- Akses ke endpoint backend DeporCS Hub
-- File environment (`.env`) sesuai kebutuhan project
-
----
-
-## 🚀 Instalasi & Menjalankan (Development)
-
-1. **Clone repository frontend**
-   ```bash
-   git clone https://github.com/DeporCS-HUB/Frontend-DeporCS-Hub.git
-   cd Frontend-DeporCS-Hub
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-   atau
-   ```bash
-   yarn
-   ```
-
-3. **Konfigurasi environment**
-   
-   Buat file `.env` di root project lalu isi variabel yang dibutuhkan (contoh):
-   ```env
-   VITE_API_BASE_URL=http://localhost:5000
-   VITE_APP_NAME=DeporCS Hub
-   ```
-   > Sesuaikan nama variabel dengan implementasi di kode kamu (`VITE_*` untuk Vite).
-
-4. **Jalankan development server**
-   ```bash
-   npm run dev
-   ```
-   atau
-   ```bash
-   yarn dev
-   ```
-
-5. **Buka di browser**
-   
-   Umumnya di:
-   ```bash
-   http://localhost:5173
-   ```
-
----
-
-## 🏗️ Build untuk Production
+## Menjalankan secara lokal
 
 ```bash
-npm run build
-npm run preview
+git clone https://github.com/DeporCS-HUB/Frontend-DeporCS-Hub.git
+cd Frontend-DeporCS-Hub
+npm install
+npm run dev
 ```
 
-Hasil build production akan tersedia di folder output sesuai konfigurasi build tool yang digunakan.
+Buka alamat yang muncul di terminal, biasanya `http://localhost:5173`.
 
----
+## Perintah
 
-## 🌐 Deployment
+| Perintah | Kegunaan |
+| --- | --- |
+| `npm run dev` | Menjalankan development server Vite |
+| `npm run build` | Membuat build production ke folder `dist` |
+| `npm run preview` | Menjalankan preview hasil build production |
+| `npm run lint` | Memeriksa kualitas kode dengan ESLint |
 
-Frontend ini dirancang untuk dideploy di **Vercel**.
+## Routing
 
-Langkah singkat:
-1. Push project ke GitHub.
-2. Import repo ke Vercel.
-3. Set environment variables di dashboard Vercel.
-4. Deploy.
+Semua halaman menggunakan layout/sidebar yang sama melalui nested route React Router.
 
----
+| URL | Halaman |
+| --- | --- |
+| `/` | Dashboard |
+| `/programs` | Program Management |
+| `/tasks` | Task Board |
+| `/finance` | Finance Dashboard |
+| `/inventory` | Inventory |
+| `/events` | Event & Permit Center |
+| `/team` | Team Management |
+| `/settings` | Settings |
 
-## 🤝 Kontribusi
+URL yang tidak terdaftar akan diarahkan ke dashboard.
 
-Kontribusi terbuka untuk pengembangan fitur, perbaikan bug, dan peningkatan UI/UX.
+## Struktur project
 
-Alur kontribusi:
-1. Fork repository
-2. Buat branch fitur: `feat/nama-fitur`
-3. Commit perubahan
-4. Push ke branch kamu
-5. Buat Pull Request
+```text
+src/
+|-- components/  # Layout dan komponen UI reusable
+|-- pages/       # Halaman tiap route
+|-- assets/      # Aset statis aplikasi
+|-- data.js      # Data dummy untuk tampilan saat ini
+|-- App.jsx      # Konfigurasi route
+`-- main.jsx     # Entry point React
+```
 
----
+## Catatan
 
-## 📄 Lisensi
-
-Tentukan lisensi project di sini (misalnya MIT) jika sudah tersedia.
-
----
-
-## 👥 Tim
-
-Dikembangkan oleh tim **DeporCS Hub** untuk mendukung transformasi digital operasional Departemen Olahraga.
+Saat ini aplikasi menggunakan data dummy dari `src/data.js`. Ketika backend siap, ganti sumber data tersebut dengan service/API layer agar komponen halaman tetap terpisah dari logika request.
