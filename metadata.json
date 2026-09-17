@@ -1,0 +1,6 @@
+{
+  "name": "DeporCS Hub",
+  "description": "Sports and club operations management platform for programs, events, finance, inventory, tasks, and team coordination.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
