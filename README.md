@@ -27,7 +27,7 @@ Open `http://localhost:3000`. Vite proxies `/api` to `http://localhost:8080`; ch
 - Events lists real schedules and venue/permit statuses. Staff/admin can create, edit, and delete events linked to programs; members have read-only controls. Search and permit filters apply to the current page. Staff record venue confirmations manually; the app does not send applications or issue permits.
 - Settings saves the signed-in account's display name through `PUT /profiles/me`. The header updates only after a successful write, and session restoration loads the saved name. Role and activation cannot be edited.
 
-Apply both backend migrations, including `202610080002_events_profiles.sql`, before using Events or profile editing.
+Apply both backend migrations, including `20261008154204_events_profiles.sql`, before using Events or profile editing.
 
 Team is a live read-only profile directory. Invitations, role editing, organization structure, attendance, external permit approval workflows, and language/theme/notification preferences are not implemented. QR scanning, files/reports, and notification delivery are not implemented.
 
@@ -45,7 +45,7 @@ Ten Node test-runner tests cover API/session refresh concurrency, expiry, failed
 
 If Chromium is already installed, `PLAYWRIGHT_CHROME_PATH` can point to its executable. CI runs build/lint/unit tests and browser tests. The lockfile pins installed dependencies. Vite's build currently reports a non-fatal large-chunk advisory for the chart library; code splitting remains an optimization.
 
-Live acceptance requires an isolated Supabase development project, migrated schema, and member/staff accounts. Verify login → dashboard → create/edit/delete → task status → reload → session refresh → logout using those accounts. No real Supabase credentials or accounts were available in the implementation runtime; no production migration or deployment was performed.
+Live acceptance requires an isolated Supabase development project, migrated schema, and member/staff accounts. Verify login → dashboard → create/edit/delete → task status → reload → session refresh → logout using those accounts. The user-authorized Supabase development project `dajpnhkutkhgxwkjzvpg` now has both migrations applied. Its hosted PostgreSQL RLS suites and anonymous HTTP denial checks passed, but these do not prove frontend login or authenticated CRUD/persistence. Verified member/staff Auth accounts are still required; email confirmation remains enabled. No production deployment or merge was performed. See CODEX_HANDOFF.md and the backend development-validation report for the current checkpoint.
 
 ## Cloud startup
 
