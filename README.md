@@ -36,7 +36,7 @@ npx playwright install chromium
 npm run test:browser
 ```
 
-Eight Node test-runner tests cover API/session refresh concurrency, expiry, failed mutations, pagination, network errors, and logout failure. Four Playwright tests exercise login/protected routing, program CRUD and reload, failed task updates, member controls, and finance/inventory forms **against a mocked API**. They do not certify live Supabase login or database persistence. Local browser execution was blocked by the managed runtime denying Chromium’s Unix socket creation; the browser suite is also configured in GitHub CI.
+Eight Node test-runner tests cover API/session refresh concurrency, expiry, failed mutations, pagination, network errors, and logout failure. Four Playwright tests exercise login/protected routing, program CRUD and reload, failed task updates, member controls, and finance/inventory forms **against a mocked API**. They do not certify live Supabase login or database persistence. Local browser execution was blocked by the managed runtime denying Chromium’s Unix socket creation; all four browser tests subsequently passed in GitHub CI after making dropdown labels explicit.
 
 If Chromium is already installed, `PLAYWRIGHT_CHROME_PATH` can point to its executable. CI runs build/lint/unit tests and browser tests. The lockfile pins installed dependencies. Vite's build currently reports a non-fatal large-chunk advisory for the chart library; code splitting remains an optimization.
 
