@@ -24,7 +24,12 @@ Open `http://localhost:3000`. Vite proxies `/api` to `http://localhost:8080`; ch
 - All collections have loading, empty, error, retry, and pagination controls. Search/status filters apply to the current page (100 rows). Linked form choices fetch subsequent pages as needed. Successful writes refresh both lists and dashboard summaries; failed writes display errors and retain server-confirmed data.
 - Program deletion can return 409 when tasks/transactions still reference it. Handle those records first; the UI does not silently cascade them.
 
-Team is a live read-only profile directory. Invitations, role editing, organization structure, and attendance are not implemented. Events/venue permits and persisted Settings are explicitly marked unavailable. QR scanning, files/reports, and notification delivery are not implemented.
+- Events lists real schedules and venue/permit statuses. Staff/admin can create, edit, and delete events linked to programs; members have read-only controls. Search and permit filters apply to the current page. Staff record venue confirmations manually; the app does not send applications or issue permits.
+- Settings saves the signed-in account's display name through `PUT /profiles/me`. The header updates only after a successful write, and session restoration loads the saved name. Role and activation cannot be edited.
+
+Apply both backend migrations, including `202610080002_events_profiles.sql`, before using Events or profile editing.
+
+Team is a live read-only profile directory. Invitations, role editing, organization structure, attendance, external permit approval workflows, and language/theme/notification preferences are not implemented. QR scanning, files/reports, and notification delivery are not implemented.
 
 ## Build and verify
 
@@ -36,7 +41,7 @@ npx playwright install chromium
 npm run test:browser
 ```
 
-Eight Node test-runner tests cover API/session refresh concurrency, expiry, failed mutations, pagination, network errors, and logout failure. Four Playwright tests exercise login/protected routing, program CRUD and reload, failed task updates, member controls, and finance/inventory forms **against a mocked API**. They do not certify live Supabase login or database persistence. Local browser execution was blocked by the managed runtime denying Chromium’s Unix socket creation; all four browser tests subsequently passed in GitHub CI after making dropdown labels explicit.
+Ten Node test-runner tests cover API/session refresh concurrency, expiry, failed mutations, pagination, network errors, and logout failure. Seven Playwright tests exercise login/protected routing, program CRUD and reload, failed task updates, member controls, finance/inventory forms, event CRUD/failure states, member event controls, and profile save/reload/failure states **against a mocked API**. They do not certify live Supabase login or database persistence. Local browser execution was blocked by the managed runtime denying Chromium’s Unix socket creation; the initial four browser tests passed in GitHub CI. The expanded suite is also run in GitHub CI.
 
 If Chromium is already installed, `PLAYWRIGHT_CHROME_PATH` can point to its executable. CI runs build/lint/unit tests and browser tests. The lockfile pins installed dependencies. Vite's build currently reports a non-fatal large-chunk advisory for the chart library; code splitting remains an optimization.
 

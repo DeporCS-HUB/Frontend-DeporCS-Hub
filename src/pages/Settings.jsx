@@ -1,6 +1,27 @@
+import { useState } from 'react';
 import { PageTitle, Card } from '../components/UI';
 import { useAuth } from '../lib/hooks';
+import { updateProfile } from '../lib/api';
+
 export default function Settings() {
   const { user } = useAuth();
-  return <><PageTitle title="Settings" subtitle="Account and workspace preferences" /><Card className="settings"><h3>Account</h3><p>{user.name} · {user.role}</p><p>Preferensi bahasa, tampilan, dan notifikasi belum disimpan oleh aplikasi.</p></Card></>;
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [saved, setSaved] = useState(false);
+  async function submit(event) {
+    event.preventDefault();
+    const name = new FormData(event.currentTarget).get('name').trim();
+    setError(''); setSaved(false);
+    if (!name) { setError('Nama tidak boleh kosong.'); return; }
+    setBusy(true);
+    try { await updateProfile(name); setSaved(true); }
+    catch (failure) { setError(failure.message); }
+    finally { setBusy(false); }
+  }
+  return <><PageTitle title="Settings" subtitle="Pengaturan profil akun" /><Card className="settings"><h3>Profil</h3><p>Role: {user.role}</p>
+    <form onSubmit={submit}><label>Nama tampilan<input key={user.name} name="name" defaultValue={user.name} maxLength={120} required disabled={busy} onChange={() => setSaved(false)} /></label>
+      {error && <p className="error" role="alert">{error}</p>}{saved && <p role="status">Profil berhasil disimpan.</p>}
+      <div className="actions"><button className="primary" disabled={busy}>{busy ? 'Menyimpan…' : 'Simpan profil'}</button></div>
+    </form><p>Role dan aktivasi akun dikelola operator terpercaya. Preferensi bahasa, tampilan, dan notifikasi belum tersedia.</p>
+  </Card></>;
 }

@@ -3,12 +3,13 @@ import { api, listAll } from '../lib/api';
 import { useAuth } from '../lib/hooks';
 const today = () => new Date().toISOString().slice(0, 10);
 const schemas = {
+  events: [['name','Nama','text',true],['description','Deskripsi','textarea'],['program_id','Program','programs'],['venue','Venue','text',true],['start_date','Mulai','date',true],['end_date','Selesai','date',true],['status','Status',['Planning','Confirmed','Completed','Cancelled'],true],['permit_status','Status izin',['Not required','Pending','Approved','Rejected'],true]],
   programs: [['name','Nama','text',true],['description','Deskripsi','textarea'],['pic','PIC','text',true],['pic_id','Akun PIC','profiles'],['start_date','Mulai','date',true],['end_date','Selesai','date',true],['status','Status',['Planning','Ongoing','Active','Completed','Cancelled'],true],['progress','Progress (%)','number',true],['budget','Budget (Rp)','number',true]],
   tasks: [['title','Judul','text',true],['description','Deskripsi','textarea'],['program_id','Program','programs'],['assignee_id','Penanggung jawab','profiles'],['status','Status',['Backlog','To Do','In Progress','Review','Done'],true],['priority','Prioritas',['Low','Medium','High'],true],['due_date','Deadline','date']],
   finances: [['description','Deskripsi','text',true],['program_id','Program','programs'],['type','Jenis',['expense','income'],true],['amount','Nominal (Rp)','number',true],['category','Kategori','text',true],['transaction_date','Tanggal','date',true],['status','Status',['pending','approved','rejected'],true]],
   inventory: [['name','Nama','text',true],['category','Kategori','text',true],['quantity','Jumlah','number',true],['status','Status',['Available','Borrowed','Maintenance','Lost'],true],['condition','Kondisi',['Baik','Perawatan','Rusak'],true],['emoji','Ikon emoji','text'],['location','Lokasi','text']],
 };
-const defaults = { programs: { start_date: today(), end_date: today(), progress: 0, budget: 0 }, tasks: { status: 'To Do', priority: 'Medium' }, finances: { transaction_date: today(), status: 'pending' }, inventory: { quantity: 1, condition: 'Baik' } };
+const defaults = { events: { start_date: today(), end_date: today(), status: 'Planning', permit_status: 'Pending' }, programs: { start_date: today(), end_date: today(), progress: 0, budget: 0 }, tasks: { status: 'To Do', priority: 'Medium' }, finances: { transaction_date: today(), status: 'pending' }, inventory: { quantity: 1, condition: 'Baik' } };
 export default function Editor({ resource, item, onClose, onSaved }) {
   const { user } = useAuth();
   const [error, setError] = useState('');

@@ -52,6 +52,12 @@ export async function login(email, password) {
   const { data } = await send('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }, false);
   return accept(data);
 }
+export async function updateProfile(name) {
+  const userId = snapshot.user?.id;
+  const { data } = await api('/profiles/me', { method: 'PUT', body: JSON.stringify({ name }) });
+  if (snapshot.user?.id === userId && data.id === userId) publish({ ...snapshot.user, name: data.name });
+  return data;
+}
 export async function logout() {
   try { await api('/auth/logout', { method: 'POST' }); accessToken = null; publish(null); }
   catch (error) { accessToken = null; publish(null, `Logout server gagal: ${error.message}`); throw error; }

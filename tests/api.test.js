@@ -52,3 +52,20 @@ test('logout failure clears local bearer but reports server failure', async () =
  const api = await fresh();globalThis.fetch = async url => url.endsWith('/auth/login') ? response({ data: session }) : response({ error:{message:'Unavailable'} },503);
  await api.login('member@example.invalid','test-password');await assert.rejects(api.logout(),/Unavailable/);assert.equal(api.authStore.getSnapshot().user,null);assert.match(api.authStore.getSnapshot().error,/Logout server gagal/);
 });
+
+test('profile update publishes confirmed name while keeping the trusted role', async () => {
+ const api = await fresh();
+ globalThis.fetch = async url => url.endsWith('/auth/login') ? response({ data: session }) : response({ data: { ...session.user, name: 'Updated', role: 'admin' } });
+ await api.login('member@example.invalid','test-password');
+ await api.updateProfile('Updated');
+ assert.equal(api.authStore.getSnapshot().user.name,'Updated');
+ assert.equal(api.authStore.getSnapshot().user.role,'member');
+});
+test('failed profile update retains previous name and invalidates no data', async () => {
+ const api = await fresh();
+ globalThis.fetch = async url => url.endsWith('/auth/login') ? response({ data: session }) : response({ error: { message: 'Unavailable' } },503);
+ await api.login('member@example.invalid','test-password');
+ await assert.rejects(api.updateProfile('Failed'),/Unavailable/);
+ assert.equal(api.authStore.getSnapshot().user.name,'Test');
+ assert.equal(api.dataStore.getSnapshot(),0);
+});
