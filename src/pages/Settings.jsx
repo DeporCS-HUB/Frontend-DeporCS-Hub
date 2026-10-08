@@ -1,1 +1,6 @@
-import {PageTitle,Card} from '../components/UI';export default function Settings(){return <><PageTitle title="Settings" subtitle="Manage your workspace preferences"/><Card className="settings"><h3>Appearance</h3><label>Interface density<select><option>Comfortable</option><option>Compact</option></select></label><label>Language<select><option>English</option><option>Bahasa Indonesia</option></select></label><h3>Notifications</h3><label className="switch">Program updates<input type="checkbox" defaultChecked/><span/></label><label className="switch">Task reminders<input type="checkbox" defaultChecked/><span/></label><button className="primary">Save changes</button></Card></>}
+import { PageTitle, Card } from '../components/UI';
+import { useAuth } from '../lib/hooks';
+export default function Settings() {
+  const { user } = useAuth();
+  return <><PageTitle title="Settings" subtitle="Account and workspace preferences" /><Card className="settings"><h3>Account</h3><p>{user.name} · {user.role}</p><p>Preferensi bahasa, tampilan, dan notifikasi belum disimpan oleh aplikasi.</p></Card></>;
+}
