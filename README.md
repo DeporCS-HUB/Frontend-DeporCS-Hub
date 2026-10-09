@@ -5,7 +5,11 @@ React 19 + Vite. Main screens use the companion Java 21/Spring Boot API in `Depo
 
 ## Current department roles
 
-The UI uses **BPH** (management) and **Staff** (executing members). The backend returns a trusted departmentRole while keeping stored legacy profile.role values compatible with existing accounts and RLS: staff/admin -> BPH, member -> Staff. Database population is deferred. See [role adjustment](https://github.com/DeporCS-HUB/Backend-DeporCS-Hub/blob/main/docs/role-adjustment.md) for permissions and rollout.
+The UI uses **BPH** (management) and **Staff** (executing members). The backend returns a trusted departmentRole while keeping stored legacy profile.role values compatible with existing accounts and RLS: staff/admin -> BPH, member -> Staff. The development directory contains 4 BPH and 13 Staff accounts using `name@depor.com`; business-data population remains deferred. See [role adjustment](https://github.com/DeporCS-HUB/Backend-DeporCS-Hub/blob/main/docs/role-adjustment.md) for permissions and rollout.
+
+## Depor interface
+
+The interface uses the user's black, charcoal, navy and muted red palette in `src/styles.css`. Compact headings, flat panels, Indonesian navigation and readable dark charts replace the decorative dashboard banner. Forms and management actions remain available on mobile; collapsed navigation keeps accessible labels. Typography uses system fonts, and routes/charts retain lazy loading and the bounded in-memory API cache. The typographic D mark is an application placeholder, not an official Depor logo.
 
 ## Run locally
 
@@ -46,13 +50,13 @@ npx playwright install chromium
 npm run test:browser
 ```
 
-Ten Node test-runner tests cover API/session refresh concurrency, expiry, failed mutations, pagination, network errors, and logout failure. Seven Playwright tests exercise login/protected routing, program CRUD and reload, failed task updates, member controls, finance/inventory forms, event CRUD/failure states, member event controls, and profile save/reload/failure states **against a mocked API**. They do not certify live Supabase login or database persistence. Local browser execution was blocked by the managed runtime denying Chromium’s Unix socket creation; the initial four browser tests passed in GitHub CI. The expanded suite is also run in GitHub CI.
+The suite has **22 unit tests** covering API/session refresh concurrency, expiry, failed mutations, pagination, logout, role compatibility and cache invalidation/account isolation. **13 Playwright browser tests** cover login/routing, CRUD and reload, failed writes, BPH/Staff permissions, profile editing, cached navigation, desktop collapsed navigation and mobile forms at 375 px. Build, lint, unit tests and browser tests pass locally. Desktop/mobile screenshots are checked manually. Browser tests use a **mocked API**; they do not certify live Supabase login, hosted persistence or browser cookie behavior.
 
-If Chromium is already installed, `PLAYWRIGHT_CHROME_PATH` can point to its executable. CI runs build/lint/unit tests and browser tests. The lockfile pins installed dependencies. Vite's build currently reports a non-fatal large-chunk advisory for the chart library; code splitting remains an optimization.
+If Chromium is already installed, `PLAYWRIGHT_CHROME_PATH` can point to its executable. CI runs build/lint/unit and browser tests. Charts and routes load in separate chunks; the initial app bundle stays near 264 kB before gzip. No external font request or new dependency is added for the Depor theme.
 
-The user-authorized Free development project `dajpnhkutkhgxwkjzvpg` has both migrations applied and two user-provisioned, confirmed, active accounts (staff/member). The companion backend passed **42 Java tests and 49 real Auth/Java/PostgREST checks**, including successful login, CRUD and independently verified persistence, member ownership and RLS restrictions, own-profile edits, refresh rotation, logout, and rejection of revoked refresh tokens. Live edits exposed an unsupported PATCH transport; the backend now uses Java HttpClient/JdkClientHttpRequestFactory and has a PATCH regression test. All temporary resource records and test sessions were cleaned up; both accounts remain available.
+The authorized Free development project `dajpnhkutkhgxwkjzvpg` has both migrations applied and 17 active confirmed Auth accounts (4 BPH, 13 Staff) using `name@depor.com`. The two original test accounts, profiles, identities and sessions have been deleted. Original roster UUIDs/passwords are preserved. Business tables remain empty until the user supplies department records.
 
-Real React/browser acceptance (login → dashboard → CRUD → reload → refresh → logout) and browser cookie-policy behavior remain untested. Previous mocked frontend tests are separate evidence. The latest Auth advisor warns that leaked-password protection is disabled; it requires Pro, so the Free/$0 constraint is retained. Performance recommendations remain documented in the backend report. At the integration-test checkpoint, no merge or deployment had occurred. Both PR #1s are now merged; hosting remains pending. Current commits skip new Actions runs to avoid additional cost. See CODEX_HANDOFF.md and the [backend development-validation report](https://github.com/DeporCS-HUB/Backend-DeporCS-Hub/blob/codex/supabase-main-flows/docs/live-development-validation.md).
+Earlier backend evidence: **42 Java tests and 49 real Auth/Java/PostgREST checks** with the original test accounts covered CRUD, persistence, RLS, profile edits, refresh rotation and logout. This is historical evidence, not a retest of the current roster. See CODEX_HANDOFF.md and the [backend validation report](https://github.com/DeporCS-HUB/Backend-DeporCS-Hub/blob/main/docs/live-development-validation.md).
 
 ## Cloud startup
 
@@ -66,4 +70,4 @@ The Docker frontend uses Node only to compile React/Vite. All backend runtime an
 
 The repository is public and PR #1 is merged. vercel.json defines the Vite install/build/output and SPA rewrite. Set **VITE_API_URL to the real backend HTTPS origin plus /api** before the Vercel build; missing configuration fails the build. The SPA rewrite is not an API proxy. No Supabase key belongs in the frontend.
 
-Use only a verified Hobby/$0 account. No live Vercel URL or browser acceptance is recorded yet. Follow the [backend Vercel runbook](https://github.com/DeporCS-HUB/Backend-DeporCS-Hub/blob/main/docs/vercel-deployment.md) for CORS, secure refresh cookies and deployment verification.
+Use only the existing Hobby/$0 account; do not provision paid resources. The frontend is https://depor-cs-hub-web.vercel.app and the backend is https://depor-cs-hub-api.vercel.app. Merge/deployment is user-authorized; deployment status is verified through GitHub/Vercel commit checks. Real hosted browser acceptance remains separate from mocked tests. Follow the [backend Vercel runbook](https://github.com/DeporCS-HUB/Backend-DeporCS-Hub/blob/main/docs/vercel-deployment.md) for CORS, secure refresh cookies and deployment verification.

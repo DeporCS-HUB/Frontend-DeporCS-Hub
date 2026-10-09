@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { Trophy } from 'lucide-react';
 import { login } from '../lib/api';
 import { useAuth } from '../lib/hooks';
 export default function Login({ from }) {
@@ -16,5 +15,5 @@ export default function Login({ from }) {
     catch (failure) { setError(failure.message); }
     finally { setBusy(false); }
   }
-  return <main className="login-shell"><section className="card login-card"><span className="brand-mark"><Trophy /></span><h1>Depor CS HUB</h1><p>Masuk dengan akun departemen Anda.</p><form onSubmit={submit}><label>Email<input name="email" type="email" required autoComplete="username" maxLength={254} /></label><label>Password<input name="password" type="password" required autoComplete="current-password" maxLength={1024} /></label>{(error || sessionError) && <p role="alert" className="error">{error || sessionError}</p>}{loading && <p role="status">Memeriksa sesi…</p>}<button className="primary" disabled={busy || loading}>{busy ? 'Memproses…' : 'Login'}</button></form></section></main>;
+  return <main className="login-shell"><section className="card login-card"><div className="login-brand"><span className="eyebrow">BEM FASILKOM UI</span><h1>DEPOR<span>CS HUB</span></h1><p>Ruang kerja Departemen Olahraga.</p></div><form onSubmit={submit}><h2>Masuk ke akun</h2><label>Email<input name="email" type="email" placeholder="nama@depor.com" required autoComplete="username" maxLength={254} /></label><label>Password<input name="password" type="password" required autoComplete="current-password" maxLength={1024} /></label>{(error || sessionError) && <p role="alert" className="error">{error || sessionError}</p>}{loading && <p role="status">Memeriksa sesi…</p>}<button className="primary" disabled={busy || loading}>{busy ? 'Memproses…' : 'Login'}</button></form></section></main>;
 }
