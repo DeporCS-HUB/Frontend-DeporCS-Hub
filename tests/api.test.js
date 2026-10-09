@@ -69,3 +69,61 @@ test('failed profile update retains previous name and invalidates no data', asyn
  assert.equal(api.authStore.getSnapshot().user.name,'Test');
  assert.equal(api.dataStore.getSnapshot(),0);
 });
+
+test('GETs deduplicate, successful writes invalidate, and failed writes retain the cache', async () => {
+ const api = await fresh(); let reads = 0; let fail = false;
+ globalThis.fetch = async (url, options) => {
+  if (url.endsWith('/auth/login')) return response({ data: session });
+  if (options.method === 'POST') return fail ? response({ error: { message: 'Unavailable' } }, 503) : response({ data: { id: 'new' } });
+  reads++; return response({ data: [reads] });
+ };
+ await api.login('member@example.invalid', 'test');
+ await Promise.all([api.api('/tasks'), api.api('/tasks')]); assert.equal(reads, 1);
+ await api.api('/tasks'); assert.equal(reads, 1);
+ fail = true; await assert.rejects(api.api('/tasks', { method: 'POST', body: '{}' }), /Unavailable/);
+ await api.api('/tasks'); assert.equal(reads, 1);
+ fail = false; await api.api('/tasks', { method: 'POST', body: '{}' });
+ await api.api('/tasks'); assert.equal(reads, 2);
+ await api.api('/tasks', { force: true }); assert.equal(reads, 3);
+});
+test('logout, account change and trusted role changes clear read data; token rotation keeps same-user data', async () => {
+ const api = await fresh(); let profile = session; let reads = 0;
+ globalThis.fetch = async url => {
+  if (url.endsWith('/auth/login') || url.endsWith('/auth/refresh')) return response({ data: profile });
+  if (url.endsWith('/auth/logout')) return response({ data: { loggedOut: true } });
+  reads++; return response({ data: [profile.user.id, reads] });
+ };
+ await api.login('first@example.invalid', 'test'); await api.api('/tasks');
+ profile = { ...session, accessToken: 'rotated' }; await api.refreshSession(); await api.api('/tasks'); assert.equal(reads, 1);
+ profile = { ...session, user: { ...session.user, role: 'staff', departmentRole: 'bph' } };
+ await api.refreshSession(); assert.equal(api.cachedResource('/tasks'), undefined);
+ await api.api('/tasks'); assert.equal(reads, 2);
+ profile = { ...session, user: { ...session.user, id: 'other-user' } };
+ await api.login('other@example.invalid', 'test'); assert.equal(api.cachedResource('/tasks'), undefined);
+ await api.api('/tasks'); assert.equal(reads, 3);
+ await api.logout(); assert.equal(api.cachedResource('/tasks'), undefined);
+});
+test('pending read from a previous account cannot return or cache that account data', async () => {
+ const api = await fresh(); let profile = session; let finish;
+ globalThis.fetch = async url => {
+  if (url.endsWith('/auth/login')) return response({ data: profile });
+  return new Promise(resolve => { finish = () => resolve(response({ data: ['previous-account'] })); });
+ };
+ await api.login('first@example.invalid', 'test');
+ const pending = api.api('/tasks'); await Promise.resolve(); await Promise.resolve();
+ profile = { ...session, user: { ...session.user, id: 'other' } };
+ await api.login('other@example.invalid', 'test'); finish();
+ await assert.rejects(pending, /Session berubah/); assert.equal(api.cachedResource('/tasks'), undefined);
+});
+test('failed logout clears cached data and authentication endpoints always reach the server', async () => {
+ const api = await fresh(); let calls = 0;
+ globalThis.fetch = async url => {
+  calls++;
+  if (url.endsWith('/auth/login')) return response({ data: session });
+  if (url.endsWith('/auth/logout')) return response({ error: { message: 'Unavailable' } }, 503);
+  return response({ data: ['row'] });
+ };
+ await api.login('member@example.invalid', 'test'); await api.api('/tasks');
+ await assert.rejects(api.logout(), /Unavailable/); assert.equal(api.cachedResource('/tasks'), undefined);
+ const before = calls; await api.api('/auth/session'); await api.api('/auth/session'); assert.equal(calls - before, 2);
+});

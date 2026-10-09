@@ -2,13 +2,14 @@ import { test, expect } from '@playwright/test';
 const user = { id: '00000000-0000-0000-0000-000000000001', name: 'Development Staff', role: 'staff' };
 const summary = { activePrograms: 1, totalPrograms: 1, completedPrograms: 0, pendingTasks: 1, completedTasks: 0, budget: 1000000, income: 0, expense: 0, remaining: 1000000, totalAssets: 3, budgetUtilization: 0 };
 async function mockApi(page, role = 'staff') {
- let signedIn = false;
+ let signedIn = false; const counts = {};
  let profile = { ...user, role, departmentRole: role === 'member' ? 'staff' : 'bph' };
  let failEvent = false; let failProfile = false;
  const rows = { events: [], programs: [], finances: [], inventory: [], tasks: [{ id: 'task-id', title: 'Review proposal', description: '', status: 'To Do', priority: 'Medium', program_id: null, assignee_id: user.id, due_date: null, created_by: user.id }] };
  let failTask = false;
  await page.route('**/api/**', async route => {
   const req = route.request(); const url = new URL(req.url()); const path = url.pathname.replace('/api/', '');
+  const key = req.method() + ' ' + path; counts[key] = (counts[key] || 0) + 1;
   const reply = (data, status = 200) => route.fulfill({ status, json: status >= 400 ? { error: { message: data } } : { data } });
   if (path === 'auth/refresh') return signedIn ? reply({ accessToken: 'development-token', user: profile, expiresIn: 3600 }) : reply('Session expired', 401);
   if (path === 'auth/login') { signedIn = true; return reply({ accessToken: 'development-token', user: profile, expiresIn: 3600 }); }
@@ -28,7 +29,7 @@ async function mockApi(page, role = 'staff') {
   if (req.method() === 'DELETE') { rows[resource] = rows[resource].filter(row => row.id !== id);return reply({ deleted: true }); }
   return reply('Not found',404);
  });
- return { failEvent() { failEvent = true; }, failProfile() { failProfile = true; }, failTask() { failTask = true; }, rows };
+ return { failEvent() { failEvent = true; }, failProfile() { failProfile = true; }, failTask() { failTask = true; }, rows, counts };
 }
 async function login(page) {
  await page.goto('/'); await expect(page).toHaveURL(/login/);
@@ -165,4 +166,38 @@ test('Staff cannot operate another person\'s task and has no management controls
  await expect(other.getByRole('button', { name: 'Edit', exact: true })).toHaveCount(0);
  await expect(other.getByRole('combobox')).toHaveCount(0);
  await expect(page.getByLabel('Status Review proposal')).toBeVisible();
+});
+
+test('navigation reuses dashboard summary and a successful write requests a fresh summary', async ({ page }) => {
+ const mock = await mockApi(page); await login(page);
+ for (const name of ['Program','Inventory','Finance']) {
+  await page.getByRole('link', { name, exact: true }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+ }
+ await expect(page.getByRole('heading', { name: 'Finance Dashboard' })).toBeVisible();
+ await expect.poll(() => mock.counts['GET dashboard']).toBe(1);
+ await page.getByRole('button', { name: 'Add Transaction' }).click();
+ await page.getByLabel('Deskripsi', { exact: true }).fill('Refresh summary');
+ await page.getByLabel('Nominal (Rp)', { exact: true }).fill('1000');
+ await page.getByLabel('Kategori', { exact: true }).fill('Equipment');
+ await page.getByRole('button', { name: 'Simpan', exact: true }).click();
+ await expect(page.getByRole('cell', { name: 'Refresh summary' })).toBeVisible();
+ await expect.poll(() => mock.counts['GET dashboard']).toBe(2);
+});
+test('login form is visible while session restoration waits and submits only after checking', async ({ page }) => {
+ await mockApi(page); let release;
+ const gate = new Promise(resolve => { release = resolve; });
+ await page.route('**/api/auth/refresh', async route => {
+  await gate; await route.fulfill({ status: 401, json: { error: { message: 'Session expired' } } });
+ });
+ await page.goto('/login');
+ await expect(page.getByLabel('Email', { exact: true })).toBeVisible();
+ await expect(page.getByRole('status')).toHaveText('Memeriksa sesi…');
+ await expect(page.getByRole('button', { name: 'Login', exact: true })).toBeDisabled();
+ await page.getByLabel('Email', { exact: true }).fill('staff@example.invalid');
+ await page.getByLabel('Password', { exact: true }).fill('development-test-password');
+ release();
+ await expect(page.getByRole('button', { name: 'Login', exact: true })).toBeEnabled();
+ await page.getByRole('button', { name: 'Login', exact: true }).click();
+ await expect(page.getByText('Selamat datang, Development Staff')).toBeVisible();
 });

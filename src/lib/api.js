@@ -1,3 +1,4 @@
+import { createReadCache } from './read-cache.js';
 const base = (import.meta.env?.VITE_API_URL || '/api').replace(/\/$/, '');
 let snapshot = { user: null, loading: true, error: '' };
 let accessToken = null;
@@ -6,6 +7,11 @@ let bootstrapPromise;
 const listeners = new Set();
 const dataListeners = new Set();
 let dataRevision = 0;
+const reads = createReadCache();
+let sessionGeneration = 0;
+const scope = user => JSON.stringify([user?.id, user?.role, user?.departmentRole]);
+export const cachedResource = path => reads.peek(path)?.data;
+export const invalidateResource = path => reads.clear(path);
 export const dataStore = {
   subscribe(listener) { dataListeners.add(listener); return () => dataListeners.delete(listener); },
   getSnapshot() { return dataRevision; },
@@ -15,6 +21,7 @@ export const authStore = {
   getSnapshot() { return snapshot; },
 };
 function publish(user, error = '') {
+  if (scope(user) !== scope(snapshot.user)) { sessionGeneration++; reads.clear(); }
   snapshot = { user, loading: false, error };
   listeners.forEach(listener => listener());
 }
@@ -82,8 +89,19 @@ export async function listAll(path) {
 }
 
 export async function api(path, options = {}) {
-  const result = await requestWithSession(path, options);
-  if (options.method && options.method !== 'GET' && !path.startsWith('/auth/')) {
+  const { force = false, ...requestOptions } = options;
+  const method = (requestOptions.method || 'GET').toUpperCase();
+  // Custom fetch options and auth endpoints bypass the shared response cache.
+  const cacheable = method === 'GET' && !path.startsWith('/auth/') && Object.keys(requestOptions).length === 0;
+  const generation = sessionGeneration;
+  const run = async () => {
+    const result = await requestWithSession(path, requestOptions);
+    if (generation !== sessionGeneration) throw new Error('Session berubah. Muat ulang halaman.');
+    return result;
+  };
+  const result = cacheable ? await reads.read(path, run, { force }) : await requestWithSession(path, requestOptions);
+  if (method !== 'GET' && !path.startsWith('/auth/')) {
+    reads.clear();
     dataRevision++;
     dataListeners.forEach(listener => listener());
   }
