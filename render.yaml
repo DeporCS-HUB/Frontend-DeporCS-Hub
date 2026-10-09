@@ -2,6 +2,8 @@ services:
   - type: web
     name: depor-hub-web
     runtime: static
+    branch: main
+    autoDeployTrigger: off
     buildCommand: npm ci && npm run build
     staticPublishPath: ./dist
     envVars:
