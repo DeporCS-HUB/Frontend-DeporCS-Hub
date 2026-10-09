@@ -2,6 +2,11 @@
 
 React 19 + Vite. Main screens use the companion Java 21/Spring Boot API in `DeporCS-HUB/Backend-DeporCS-Hub`; no dummy department records are used.
 
+
+## Current department roles
+
+The UI uses **BPH** (management) and **Staff** (executing members). The backend returns a trusted departmentRole while keeping stored legacy profile.role values compatible with existing accounts and RLS: staff/admin -> BPH, member -> Staff. Database population is deferred. See [role adjustment](https://github.com/DeporCS-HUB/Backend-DeporCS-Hub/blob/main/docs/role-adjustment.md) for permissions and rollout.
+
 ## Run locally
 
 Use Node 22+ for frontend tooling only. Start the Java backend on port 8080 with **development** Supabase configuration, apply its migration, and create development Auth accounts before testing real login.
@@ -19,12 +24,12 @@ Open `http://localhost:3000`. Vite proxies `/api` to `http://localhost:8080`; ch
 
 - Login uses backend/Supabase Auth; protected routes wait for session restoration. Access tokens exist only in memory. Refresh tokens are HttpOnly cookies managed by the backend, with synchronized refresh and one retry after a 401. Expired sessions return to login.
 - Dashboard totals and current-year charts come from the database RPC. No made-up event counts, attendance, trends, or notifications are shown.
-- Staff/admin can create, edit, delete, and change status for programs, finance transactions, and inventory. Roles come from the backend and are also enforced by backend/RLS.
-- Members can read department data and create/update/delete tasks according to ownership. Staff can assign tasks to other profiles. Task statuses can be changed by select or drag/drop; the board changes only after a successful API write.
+- BPH can create, edit, delete, and change status for programs, finance transactions, and inventory. Roles come from the backend and are also enforced by backend/RLS.
+- Staff can read department data and create/update/delete tasks according to ownership. BPH can assign tasks to other profiles. Task statuses can be changed by select or drag/drop; the board changes only after a successful API write.
 - All collections have loading, empty, error, retry, and pagination controls. Search/status filters apply to the current page (100 rows). Linked form choices fetch subsequent pages as needed. Successful writes refresh both lists and dashboard summaries; failed writes display errors and retain server-confirmed data.
 - Program deletion can return 409 when tasks/transactions still reference it. Handle those records first; the UI does not silently cascade them.
 
-- Events lists real schedules and venue/permit statuses. Staff/admin can create, edit, and delete events linked to programs; members have read-only controls. Search and permit filters apply to the current page. Staff record venue confirmations manually; the app does not send applications or issue permits.
+- Events lists real schedules and venue/permit statuses. BPH can create, edit, and delete events linked to programs; Staff have read-only controls. Search and permit filters apply to the current page. Staff record venue confirmations manually; the app does not send applications or issue permits.
 - Settings saves the signed-in account's display name through `PUT /profiles/me`. The header updates only after a successful write, and session restoration loads the saved name. Role and activation cannot be edited.
 
 Apply both backend migrations, including `20261008154204_events_profiles.sql`, before using Events or profile editing.
