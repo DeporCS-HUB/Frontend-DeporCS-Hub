@@ -1,1 +1,27 @@
-import {PageTitle,Card} from '../components/UI';export default function Settings(){return <><PageTitle title="Settings" subtitle="Manage your workspace preferences"/><Card className="settings"><h3>Appearance</h3><label>Interface density<select><option>Comfortable</option><option>Compact</option></select></label><label>Language<select><option>English</option><option>Bahasa Indonesia</option></select></label><h3>Notifications</h3><label className="switch">Program updates<input type="checkbox" defaultChecked/><span/></label><label className="switch">Task reminders<input type="checkbox" defaultChecked/><span/></label><button className="primary">Save changes</button></Card></>}
+import { useState } from 'react';
+import { PageTitle, Card } from '../components/UI';
+import { useAuth } from '../lib/hooks';
+import { updateProfile } from '../lib/api';
+
+export default function Settings() {
+  const { user } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [saved, setSaved] = useState(false);
+  async function submit(event) {
+    event.preventDefault();
+    const name = new FormData(event.currentTarget).get('name').trim();
+    setError(''); setSaved(false);
+    if (!name) { setError('Nama tidak boleh kosong.'); return; }
+    setBusy(true);
+    try { await updateProfile(name); setSaved(true); }
+    catch (failure) { setError(failure.message); }
+    finally { setBusy(false); }
+  }
+  return <><PageTitle title="Settings" subtitle="Pengaturan profil akun" /><Card className="settings"><h3>Profil</h3><p>Role: {user.role}</p>
+    <form onSubmit={submit}><label>Nama tampilan<input key={user.name} name="name" defaultValue={user.name} maxLength={120} required disabled={busy} onChange={() => setSaved(false)} /></label>
+      {error && <p className="error" role="alert">{error}</p>}{saved && <p role="status">Profil berhasil disimpan.</p>}
+      <div className="actions"><button className="primary" disabled={busy}>{busy ? 'Menyimpan…' : 'Simpan profil'}</button></div>
+    </form><p>Role dan aktivasi akun dikelola operator terpercaya. Preferensi bahasa, tampilan, dan notifikasi belum tersedia.</p>
+  </Card></>;
+}

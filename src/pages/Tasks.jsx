@@ -1,2 +1,20 @@
-import {useState} from 'react';import {Plus,Filter,Users,MoreHorizontal} from 'lucide-react';import {PageTitle,Badge} from '../components/UI';import {tasks as seed} from '../data';
-export default function Tasks(){const [board,setBoard]=useState(seed);const [drag,setDrag]=useState(null);function drop(col){if(!drag)return;const next={...board,[drag.col]:board[drag.col].filter((_,i)=>i!==drag.i),[col]:[...board[col],drag.task]};setBoard(next);setDrag(null)}return <><PageTitle title="Task Board" subtitle="Track work across every program" action={<button className="primary"><Plus/>Add Task</button>}/><div className="board-tools"><span>All tasks</span><button><Filter/>Filter</button><button><Users/>Team</button></div><div className="kanban">{Object.entries(board).map(([col,items])=><div className="kanban-col" key={col} onDragOver={e=>e.preventDefault()} onDrop={()=>drop(col)}><div className="kanban-head"><b>{col}</b><span>{items.length}</span><MoreHorizontal/></div>{items.map((task,i)=><article draggable onDragStart={()=>setDrag({col,i,task})} key={task[0]}><div><Badge tone={task[1]==='High'?'red':task[1]==='Medium'?'orange':'cyan'}>{task[1]}</Badge><MoreHorizontal/></div><h3>{task[0]}</h3><p>Department Sports Hub</p><div className="task-footer"><span className="avatar tiny">{i+1}</span><small>{24+i} Aug</small></div></article>)}<button className="add-card">+ Add task</button></div>)}</div></>}
+import { useState } from 'react';
+import { Plus } from 'lucide-react';
+import { PageTitle, Badge } from '../components/UI';
+import { CollectionFeedback, CollectionEditor, Pagination, RowActions } from '../components/CollectionTools';
+import { useCollection } from '../lib/collections';
+import { api } from '../lib/api';
+import { date } from '../lib/hooks';
+const columns = ['Backlog','To Do','In Progress','Review','Done'];
+export default function Tasks() {
+  const c = useCollection('tasks'); const [dragged, setDragged] = useState(null);
+  async function move(item, status) {
+    setDragged(null); if (!item || item.status === status || c.busy || !c.canEdit(item)) return;
+    c.setBusy(true); c.setMutationError('');
+    const payload = Object.fromEntries(['title','description','program_id','assignee_id','priority','due_date'].map(key => [key, item[key] ?? null]));
+    try { await api(`/tasks/${item.id}`, { method: 'PUT', body: JSON.stringify({ ...payload, status }) }); c.reload(); }
+    catch (error) { c.setMutationError(error.message); }
+    finally { c.setBusy(false); }
+  }
+  return <><PageTitle title="Task Board" subtitle="Track work across every program" action={<button className="primary" onClick={() => c.setEditor({})}><Plus />Add Task</button>} /><CollectionFeedback collection={c} />{!c.loading && !c.error && <div className="kanban" aria-busy={c.busy}>{columns.map(status => <div className="kanban-col" key={status} onDragOver={event => event.preventDefault()} onDrop={() => move(dragged, status)}><div className="kanban-head"><b>{status}</b><span>{c.rows.filter(row => row.status === status).length}</span></div>{c.rows.filter(row => row.status === status).map(row => <article key={row.id} draggable={c.canEdit(row) && !c.busy} onDragStart={() => setDragged(row)}><Badge tone={row.priority === 'High' ? 'red' : row.priority === 'Medium' ? 'orange' : 'cyan'}>{row.priority}</Badge><h3>{row.title}</h3><p>{row.description}</p><div className="task-footer"><small>{date(row.due_date)}</small></div>{c.canEdit(row) && <label className="task-status">Status<select aria-label={`Status ${row.title}`} disabled={c.busy} value={row.status} onChange={event => move(row, event.target.value)}>{columns.map(value => <option key={value}>{value}</option>)}</select></label>}<RowActions collection={c} item={row} /></article>)}<button className="add-card" onClick={() => c.setEditor({ status })}>+ Add task</button></div>)}</div>}<Pagination collection={c} /><CollectionEditor resource="tasks" collection={c} /></>;
+}

@@ -1,4 +1,5 @@
-import { Route, Routes } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Events from './pages/Events';
@@ -8,27 +9,17 @@ import Programs from './pages/Programs';
 import Settings from './pages/Settings';
 import Tasks from './pages/Tasks';
 import Team from './pages/Team';
-
-const routes = [
-  { path: 'programs', element: <Programs /> },
-  { path: 'tasks', element: <Tasks /> },
-  { path: 'finance', element: <Finance /> },
-  { path: 'inventory', element: <Inventory /> },
-  { path: 'events', element: <Events /> },
-  { path: 'team', element: <Team /> },
-  { path: 'settings', element: <Settings /> },
-];
-
+import Login from './pages/Login';
+import DataState from './components/DataState';
+import { bootstrapSession } from './lib/api';
+import { useAuth } from './lib/hooks';
+function Protected() {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+  if (loading) return <DataState loading />;
+  return user ? <Outlet /> : <Navigate to="/login" state={{ from: location.pathname }} replace />;
+}
 export default function App() {
-  return (
-    <Routes>
-      <Route path="/" element={<Layout />}>
-        <Route index element={<Dashboard />} />
-        {routes.map(({ path, element }) => (
-          <Route key={path} path={path} element={element} />
-        ))}
-        <Route path="*" element={<Dashboard />} />
-      </Route>
-    </Routes>
-  );
+  useEffect(() => { bootstrapSession(); }, []);
+  return <Routes><Route path="/login" element={<Login />} /><Route element={<Protected />}><Route path="/" element={<Layout />}><Route index element={<Dashboard />} /><Route path="programs" element={<Programs />} /><Route path="tasks" element={<Tasks />} /><Route path="finance" element={<Finance />} /><Route path="inventory" element={<Inventory />} /><Route path="events" element={<Events />} /><Route path="team" element={<Team />} /><Route path="settings" element={<Settings />} /><Route path="*" element={<Navigate to="/" replace />} /></Route></Route></Routes>;
 }

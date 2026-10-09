@@ -1,6 +1,8 @@
+import { useAuth } from '../lib/hooks';
+import { logout } from '../lib/api';
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { Bell, CalendarDays, ChevronLeft, ClipboardList, FolderKanban, LayoutDashboard, Menu, Package, Search, Settings, Trophy, Users, WalletCards } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ClipboardList, FolderKanban, LayoutDashboard, Menu, Package, Settings, Trophy, Users, WalletCards } from 'lucide-react';
 
 const navigationItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -13,6 +15,9 @@ const navigationItems = [
 ];
 
 export default function Layout(){
+ const { user } = useAuth();
+ const [logoutBusy, setLogoutBusy] = useState(false);
+ async function signOut(){ setLogoutBusy(true); try { await logout(); } catch { /* Error remains visible on the login screen. */ } finally { setLogoutBusy(false); } }
  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
  const closeMobileMenu = () => setIsMobileMenuOpen(false);
@@ -25,8 +30,9 @@ export default function Layout(){
   </aside>
   {isMobileMenuOpen&&<button className="scrim" type="button" onClick={closeMobileMenu} aria-label="Close navigation"/>}
   <main className="main">
-   <header className="topbar"><button className="icon-btn mobile-menu" type="button" onClick={()=>setIsMobileMenuOpen(true)}><Menu/></button><div className="search"><Search size={17}/><input placeholder="Search anything..."/></div><div className="top-actions"><button className="icon-btn" type="button" aria-label="Notifications"><Bell size={19}/><i/></button><div className="avatar">RI</div><div className="profile"><b>Rafi Iqbal</b><small>IT Intern</small></div></div></header>
+   <header className="topbar"><button className="icon-btn mobile-menu" type="button" onClick={()=>setIsMobileMenuOpen(true)}><Menu/></button><div className="workspace-label">Depor CS HUB</div><div className="top-actions"><button className="secondary" onClick={signOut} disabled={logoutBusy}>{logoutBusy ? "Keluar…" : "Logout"}</button><div className="avatar">{user.name.slice(0,2).toUpperCase()}</div><div className="profile"><b>{user.name}</b><small>{user.role}</small></div></div></header>
    <div className="page"><Outlet/></div>
   </main>
  </div>
 }
+
