@@ -1,6 +1,14 @@
 # Depor CS HUB — development checkpoint
 
-Checkpoint: 2026-10-08 23:55 WIB. Read AGENTS.md and README.md before continuing.
+Current checkpoint: 9 October 2026, Depor UI redesign and account cleanup. Read AGENTS.md and README.md before continuing. Dated sections below retain historical validation; the current checkpoint supersedes older account/deployment state.
+
+## Current UI and account checkpoint
+
+- Frontend: https://depor-cs-hub-web.vercel.app; backend: https://depor-cs-hub-api.vercel.app. Main before this UI change is frontend `17b639ec2b9e6e41399c1f0c2f405d75d948cbe8`, backend `c2a55b982b049007aa58a3c02f2b1ac791f64954`.
+- The user's exact palette is implemented in `src/styles.css`: black/charcoal surfaces, navy navigation and muted red actions. Dashboard has a compact heading; generic trophy branding and the decorative clock/banner are removed. Navigation, page headings and create actions use Indonesian. Dark charts, responsive forms and accessible collapsed navigation retain route/chart splitting and the API cache.
+- Hosted Auth verification: 17 active confirmed accounts, 4 BPH and 13 Staff, all using `name@depor.com`. Original UUIDs/passwords are retained. Both prior development test users and their identities/profiles/sessions were deleted successfully. Business tables remain empty; no schema/RLS changes or paid features were added.
+- Legacy database roles remain staff/admin -> BPH, member -> Staff. Do not rename stored roles or bypass trusted profile checks.
+- Local build, lint and 22 unit tests pass. Browser verification includes desktop/mobile layouts, collapsed navigation, form bounds, role permissions and CRUD against mocked API; it does not certify live Auth or cookie behavior. Final browser/deployment evidence is recorded in the UI pull request.
 
 ## Project and authorization
 

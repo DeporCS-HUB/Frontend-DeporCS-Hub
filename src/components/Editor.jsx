@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { api, listAll } from '../lib/api';
 import { useAuth } from '../lib/hooks';
 import { canManage } from '../lib/roles';
+const resourceLabels = { programs: 'program', tasks: 'tugas', finances: 'transaksi', inventory: 'barang', events: 'kegiatan' };
 const today = () => new Date().toISOString().slice(0, 10);
 const schemas = {
   events: [['name','Nama','text',true],['description','Deskripsi','textarea'],['program_id','Program','programs'],['venue','Venue','text',true],['start_date','Mulai','date',true],['end_date','Selesai','date',true],['status','Status',['Planning','Confirmed','Completed','Cancelled'],true],['permit_status','Status izin',['Not required','Pending','Approved','Rejected'],true]],
@@ -48,7 +49,7 @@ export default function Editor({ resource, item, onClose, onSaved }) {
       const first = controls[0]; const last = controls.at(-1);
       if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
       else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
-    } }}><h2 id="editor-title">{item?.id ? 'Edit' : 'Tambah'} {resource}</h2><form onSubmit={submit}><div className="form-grid">{fields.map(([name,label,type,required]) => {
+    } }}><h2 id="editor-title">{item?.id ? 'Edit' : 'Tambah'} {resourceLabels[resource]}</h2><form onSubmit={submit}><div className="form-grid">{fields.map(([name,label,type,required]) => {
     const value = item?.[name] ?? defaults[resource]?.[name] ?? (Array.isArray(type) ? type[0] : '');
     const linked = type === 'profiles' || type === 'programs';
     return <label key={name}>{label}{Array.isArray(type) || linked ? <select aria-label={label} name={name} required={required} defaultValue={value}>{linked && <option value="">Tidak dipilih</option>}{(linked ? choices[type] || [] : type).map(option => <option key={linked ? option.id : option} value={linked ? option.id : option}>{linked ? option.name : option}</option>)}</select> : type === 'textarea' ? <textarea name={name} defaultValue={value} maxLength={2000} /> : <input name={name} type={type} defaultValue={value} required={required} min={type === 'number' ? (name === 'amount' ? 0.01 : 0) : undefined} max={name === 'progress' ? 100 : name === 'quantity' ? 1000000 : undefined} step={['amount','budget'].includes(name) ? '0.01' : type === 'number' ? '1' : undefined} maxLength={160} />}</label>;

@@ -41,7 +41,7 @@ async function login(page) {
 test('protected login, program CRUD, persistence after reload, and logout', async ({ page }) => {
  await mockApi(page); await login(page);
  await page.getByRole('link', { name: 'Program', exact: true }).click();
- await page.getByRole('button', { name: 'Create Program' }).click();
+ await page.getByRole('button', { name: 'Tambah program' }).click();
  await page.getByLabel('Nama', { exact: true }).fill('Development Tournament');
  await page.getByLabel('PIC', { exact: true }).fill('Development Staff');
  await page.getByRole('button', { name: 'Simpan', exact: true }).click();
@@ -59,7 +59,7 @@ test('protected login, program CRUD, persistence after reload, and logout', asyn
 });
 test('failed task update displays error and retains old board status', async ({ page }) => {
  const mock = await mockApi(page); await login(page);
- await page.getByRole('link', { name: 'Tasks', exact: true }).click();
+ await page.getByRole('link', { name: 'Tugas', exact: true }).click();
  await expect(page.getByRole('heading', { name: 'Review proposal' })).toBeVisible();
  mock.failTask(); await page.getByLabel('Status Review proposal').selectOption('Done');
  await expect(page.getByRole('alert')).toHaveText('Database unavailable');
@@ -68,9 +68,9 @@ test('failed task update displays error and retains old board status', async ({ 
 test('Staff has read-only program controls and can create own tasks', async ({ page }) => {
  await mockApi(page,'member'); await login(page);
  await page.getByRole('link', { name: 'Program', exact: true }).click();
- await expect(page.getByRole('button', { name: 'Create Program' })).toHaveCount(0);
- await page.getByRole('link', { name: 'Tasks', exact: true }).click();
- await page.getByRole('button', { name: 'Add Task', exact: true }).click();
+ await expect(page.getByRole('button', { name: 'Tambah program' })).toHaveCount(0);
+ await page.getByRole('link', { name: 'Tugas', exact: true }).click();
+ await page.getByRole('button', { name: 'Tambah tugas', exact: true }).click();
  await page.getByLabel('Judul').fill('Member task');
  await expect(page.getByLabel('Penanggung jawab')).toHaveCount(0);
  await page.getByRole('button', { name: 'Simpan', exact: true }).click();
@@ -78,14 +78,14 @@ test('Staff has read-only program controls and can create own tasks', async ({ p
 });
 test('inventory and finance creation use API-backed forms', async ({ page }) => {
  await mockApi(page);await login(page);
- await page.getByRole('link', { name:'Inventory',exact:true }).click();
- await page.getByRole('button', { name:'Add Asset' }).click();
+ await page.getByRole('link', { name:'Inventaris',exact:true }).click();
+ await page.getByRole('button', { name:'Tambah barang' }).click();
  await page.getByLabel('Nama',{exact:true}).fill('Development Ball');
  await page.getByLabel('Kategori',{exact:true}).fill('Sports');
  await page.getByRole('button', { name:'Simpan',exact:true }).click();
  await expect(page.getByRole('heading',{name:'Development Ball'})).toBeVisible();
- await page.getByRole('link', { name:'Finance',exact:true }).click();
- await page.getByRole('button', { name:'Add Transaction' }).click();
+ await page.getByRole('link', { name:'Keuangan',exact:true }).click();
+ await page.getByRole('button', { name:'Tambah transaksi' }).click();
  await page.getByLabel('Deskripsi',{exact:true}).fill('Development purchase');
  await page.getByLabel('Nominal (Rp)',{exact:true}).fill('100000');
  await page.getByLabel('Kategori',{exact:true}).fill('Equipment');
@@ -95,8 +95,8 @@ test('inventory and finance creation use API-backed forms', async ({ page }) => 
 
 test('BPH event CRUD retains permit status after reload', async ({ page }) => {
  await mockApi(page); await login(page);
- await page.getByRole('link', { name: 'Events', exact: true }).click();
- await page.getByRole('button', { name: 'Add Event' }).click();
+ await page.getByRole('link', { name: 'Kegiatan', exact: true }).click();
+ await page.getByRole('button', { name: 'Tambah kegiatan' }).click();
  await page.getByLabel('Nama', { exact: true }).fill('Development Event');
  await page.getByLabel('Venue', { exact: true }).fill('SOR');
  await page.getByRole('button', { name: 'Simpan', exact: true }).click();
@@ -112,8 +112,8 @@ test('BPH event CRUD retains permit status after reload', async ({ page }) => {
 });
 test('event write failure keeps editor open without a success row', async ({ page }) => {
  const mock = await mockApi(page); await login(page); mock.failEvent();
- await page.getByRole('link', { name: 'Events', exact: true }).click();
- await page.getByRole('button', { name: 'Add Event' }).click();
+ await page.getByRole('link', { name: 'Kegiatan', exact: true }).click();
+ await page.getByRole('button', { name: 'Tambah kegiatan' }).click();
  await page.getByLabel('Nama', { exact: true }).fill('Failed Event');
  await page.getByLabel('Venue', { exact: true }).fill('SOR');
  await page.getByRole('button', { name: 'Simpan', exact: true }).click();
@@ -123,9 +123,9 @@ test('event write failure keeps editor open without a success row', async ({ pag
 });
 test('member has read-only events and saves own profile across reload', async ({ page }) => {
  const mock = await mockApi(page, 'member'); await login(page);
- await page.getByRole('link', { name: 'Events', exact: true }).click();
- await expect(page.getByRole('button', { name: 'Add Event' })).toHaveCount(0);
- await page.getByRole('link', { name: 'Settings', exact: true }).click();
+ await page.getByRole('link', { name: 'Kegiatan', exact: true }).click();
+ await expect(page.getByRole('button', { name: 'Tambah kegiatan' })).toHaveCount(0);
+ await page.getByRole('link', { name: 'Pengaturan', exact: true }).click();
  await page.getByLabel('Nama tampilan').fill('Updated Member');
  await page.getByRole('button', { name: 'Simpan profil' }).click();
  await expect(page.getByRole('status')).toHaveText('Profil berhasil disimpan.');
@@ -145,7 +145,7 @@ test('BPH sees management controls and Team supports role filtering', async ({ p
  await expect(page.locator('.profile small')).toHaveText('BPH');
  await expect(page.getByRole('link', { name: 'Kelola program', exact: true })).toBeVisible();
  await expect(page.locator('.swimmer, .bubble')).toHaveCount(0);
- await page.getByRole('link', { name: 'Team', exact: true }).click();
+ await page.getByRole('link', { name: 'Tim', exact: true }).click();
  await expect(page.getByRole('heading', { name: 'Tim Departemen' })).toBeVisible();
  await page.getByLabel('Filter role').selectOption('staff');
  await expect(page.getByText('Tidak ada anggota yang sesuai filter di halaman ini.')).toBeVisible();
@@ -160,7 +160,7 @@ test('Staff cannot operate another person\'s task and has no management controls
  await login(page);
  await expect(page.locator('.profile small')).toHaveText('Staff');
  await expect(page.getByRole('link', { name: 'Kelola program', exact: true })).toHaveCount(0);
- await page.getByRole('link', { name: 'Tasks', exact: true }).click();
+ await page.getByRole('link', { name: 'Tugas', exact: true }).click();
  const other = page.locator('article').filter({ has: page.getByRole('heading', { name: 'Other assignment' }) });
  await expect(other).toHaveAttribute('draggable', 'false');
  await expect(other.getByRole('button', { name: 'Edit', exact: true })).toHaveCount(0);
@@ -170,13 +170,13 @@ test('Staff cannot operate another person\'s task and has no management controls
 
 test('navigation reuses dashboard summary and a successful write requests a fresh summary', async ({ page }) => {
  const mock = await mockApi(page); await login(page);
- for (const name of ['Program','Inventory','Finance']) {
+ for (const name of ['Program','Inventaris','Keuangan']) {
   await page.getByRole('link', { name, exact: true }).click();
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
  }
- await expect(page.getByRole('heading', { name: 'Finance Dashboard' })).toBeVisible();
+ await expect(page.getByRole('heading', { name: 'Keuangan' })).toBeVisible();
  await expect.poll(() => mock.counts['GET dashboard']).toBe(1);
- await page.getByRole('button', { name: 'Add Transaction' }).click();
+ await page.getByRole('button', { name: 'Tambah transaksi' }).click();
  await page.getByLabel('Deskripsi', { exact: true }).fill('Refresh summary');
  await page.getByLabel('Nominal (Rp)', { exact: true }).fill('1000');
  await page.getByLabel('Kategori', { exact: true }).fill('Equipment');
@@ -200,4 +200,44 @@ test('login form is visible while session restoration waits and submits only aft
  await expect(page.getByRole('button', { name: 'Login', exact: true })).toBeEnabled();
  await page.getByRole('button', { name: 'Login', exact: true }).click();
  await expect(page.getByText('Selamat datang, Development Staff')).toBeVisible();
+});
+
+test('dark workspace keeps accessible navigation when collapsed', async ({ page }, testInfo) => {
+ await page.setViewportSize({ width: 1440, height: 1100 });
+ await mockApi(page); await login(page);
+ await expect(page.getByRole('heading', { name: 'Dashboard', exact: true })).toBeVisible();
+ await expect(page.locator('.chart-legend').first()).toBeVisible();
+ await expect(page.locator('.recharts-pie-sector').first()).toBeVisible();
+ await expect(page.locator('.hero, .hero-time')).toHaveCount(0);
+ const palette = await page.evaluate(() => { const css = getComputedStyle(document.documentElement); return ['--background','--dark-red','--white'].map(key => css.getPropertyValue(key).trim()); });
+ expect(palette).toEqual(['#09090B','#5F3031','#F5F6F7']);
+ await page.screenshot({ path: testInfo.outputPath('dashboard-desktop.png'), fullPage: true });
+ await page.getByRole('button', { name: 'Ringkas navigasi' }).click();
+ const program = page.getByRole('link', { name: 'Program', exact: true });
+ await expect(program).toBeVisible(); await program.click();
+ await expect(page.getByRole('heading', { name: 'Program kerja' })).toBeVisible();
+ await page.getByRole('button', { name: 'Tambah program' }).click();
+ await expect(page.getByRole('dialog')).toBeVisible();
+ await page.screenshot({ path: testInfo.outputPath('editor-desktop.png'), fullPage: true });
+ await page.keyboard.press('Escape'); await expect(page.getByRole('dialog')).toHaveCount(0);
+});
+test('mobile menu and create form remain usable at 375px without page overflow', async ({ page }, testInfo) => {
+ await page.setViewportSize({ width: 375, height: 812 });
+ await mockApi(page); await login(page);
+ await expect(page.locator('.chart-legend').first()).toBeVisible();
+ await expect(page.locator('.recharts-pie-sector').first()).toBeVisible();
+ expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+ await page.screenshot({ path: testInfo.outputPath('dashboard-mobile.png'), fullPage: true });
+ await page.getByRole('button', { name: 'Buka navigasi' }).click();
+ await page.getByRole('link', { name: 'Program', exact: true }).click();
+ await expect(page.locator('.sidebar')).not.toHaveClass(/open/);
+ await page.getByRole('button', { name: 'Tambah program' }).click();
+ const dialog = page.getByRole('dialog'); await expect(dialog).toBeVisible();
+ const rect = await dialog.boundingBox(); expect(rect.x).toBeGreaterThanOrEqual(0); expect(rect.x + rect.width).toBeLessThanOrEqual(375);
+ await page.screenshot({ path: testInfo.outputPath('editor-mobile.png'), fullPage: true });
+ await page.getByLabel('Nama', { exact: true }).fill('Mobile program');
+ await page.getByLabel('PIC', { exact: true }).fill('Development Staff');
+ await page.getByRole('button', { name: 'Simpan', exact: true }).click();
+ await expect(page.getByRole('cell', { name: 'Mobile program' })).toBeVisible();
+ expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });

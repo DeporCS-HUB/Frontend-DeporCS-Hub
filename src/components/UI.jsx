@@ -1,4 +1,4 @@
-import { ArrowDownRight, ArrowUpRight, MoreHorizontal } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
 
 export function PageTitle({ title, subtitle, action }) {
   return (
@@ -24,7 +24,7 @@ export function StatCard({ icon, title, value, trend, down = false, color = 'blu
       <span className={`stat-icon ${color}`}>{icon}</span>
       <div>
         <small>{title}</small>
-        <strong>{value}</strong>
+        <strong className={typeof value === 'string' && value.startsWith('Rp') ? 'currency-value' : undefined}>{value}</strong>
         {trend && (
           <em className={down ? 'down' : ''}>
             <TrendIcon />
@@ -48,11 +48,11 @@ export function Progress({ value }) {
   );
 }
 
-export function PanelTitle({ title, link }) {
+export function PanelTitle({ title, action }) {
   return (
     <div className="panel-title">
       <h3>{title}</h3>
-      {link ? <button type="button">{link}</button> : <MoreHorizontal size={18} />}
+      {action}
     </div>
   );
 }
