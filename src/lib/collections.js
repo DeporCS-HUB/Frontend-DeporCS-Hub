@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { api } from './api';
+import { canManage } from './roles';
 import { useAuth, useResource } from './hooks';
 export function useCollection(resource) {
   const { user } = useAuth();
@@ -8,7 +9,7 @@ export function useCollection(resource) {
   const [editor, setEditor] = useState(null);
   const [mutationError, setMutationError] = useState('');
   const [busy, setBusy] = useState(false);
-  const manages = user.role === 'staff' || user.role === 'admin';
+  const manages = canManage(user);
   const canEdit = item => manages || (resource === 'tasks' && (!item || item.created_by === user.id || item.assignee_id === user.id));
   async function remove(item) {
     if (!window.confirm('Hapus data ini?')) return;

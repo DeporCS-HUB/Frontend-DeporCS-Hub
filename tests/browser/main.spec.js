@@ -3,7 +3,7 @@ const user = { id: '00000000-0000-0000-0000-000000000001', name: 'Development St
 const summary = { activePrograms: 1, totalPrograms: 1, completedPrograms: 0, pendingTasks: 1, completedTasks: 0, budget: 1000000, income: 0, expense: 0, remaining: 1000000, totalAssets: 3, budgetUtilization: 0 };
 async function mockApi(page, role = 'staff') {
  let signedIn = false;
- let profile = { ...user, role };
+ let profile = { ...user, role, departmentRole: role === 'member' ? 'staff' : 'bph' };
  let failEvent = false; let failProfile = false;
  const rows = { events: [], programs: [], finances: [], inventory: [], tasks: [{ id: 'task-id', title: 'Review proposal', description: '', status: 'To Do', priority: 'Medium', program_id: null, assignee_id: user.id, due_date: null, created_by: user.id }] };
  let failTask = false;
@@ -35,7 +35,7 @@ async function login(page) {
  await page.getByLabel('Email', { exact: true }).fill('staff@example.invalid');
  await page.getByLabel('Password', { exact: true }).fill('development-test-password');
  await page.getByRole('button', { name: 'Login', exact: true }).click();
- await expect(page.getByText('Welcome back, Development Staff')).toBeVisible();
+ await expect(page.getByText('Selamat datang, Development Staff')).toBeVisible();
 }
 test('protected login, program CRUD, persistence after reload, and logout', async ({ page }) => {
  await mockApi(page); await login(page);
@@ -64,7 +64,7 @@ test('failed task update displays error and retains old board status', async ({ 
  await expect(page.getByRole('alert')).toHaveText('Database unavailable');
  await expect(page.getByLabel('Status Review proposal')).toHaveValue('To Do');
 });
-test('member has read-only program controls and can create own tasks', async ({ page }) => {
+test('Staff has read-only program controls and can create own tasks', async ({ page }) => {
  await mockApi(page,'member'); await login(page);
  await page.getByRole('link', { name: 'Program', exact: true }).click();
  await expect(page.getByRole('button', { name: 'Create Program' })).toHaveCount(0);
@@ -92,7 +92,7 @@ test('inventory and finance creation use API-backed forms', async ({ page }) => 
  await expect(page.getByRole('cell',{name:'Development purchase'})).toBeVisible();
 });
 
-test('staff event CRUD retains permit status after reload', async ({ page }) => {
+test('BPH event CRUD retains permit status after reload', async ({ page }) => {
  await mockApi(page); await login(page);
  await page.getByRole('link', { name: 'Events', exact: true }).click();
  await page.getByRole('button', { name: 'Add Event' }).click();
@@ -137,4 +137,32 @@ test('member has read-only events and saves own profile across reload', async ({
  await expect(page.getByRole('alert')).toHaveText('Profile unavailable');
  await expect(page.locator('.profile b')).toHaveText('Updated Member');
  await expect(page.getByRole('status')).toHaveCount(0);
+});
+
+test('BPH sees management controls and Team supports role filtering', async ({ page }) => {
+ await mockApi(page); await login(page);
+ await expect(page.locator('.profile small')).toHaveText('BPH');
+ await expect(page.getByRole('link', { name: 'Kelola program', exact: true })).toBeVisible();
+ await expect(page.locator('.swimmer, .bubble')).toHaveCount(0);
+ await page.getByRole('link', { name: 'Team', exact: true }).click();
+ await expect(page.getByRole('heading', { name: 'Tim Departemen' })).toBeVisible();
+ await page.getByLabel('Filter role').selectOption('staff');
+ await expect(page.getByText('Tidak ada anggota yang sesuai filter di halaman ini.')).toBeVisible();
+ await page.getByLabel('Filter role').selectOption('bph');
+ await expect(page.locator('.member-list .badge')).toHaveText('BPH');
+ await page.getByLabel('Cari anggota').fill('not-present');
+ await expect(page.getByText('Tidak ada anggota yang sesuai filter di halaman ini.')).toBeVisible();
+});
+test('Staff cannot operate another person\'s task and has no management controls', async ({ page }) => {
+ const mock = await mockApi(page, 'member');
+ mock.rows.tasks.push({ id: 'other-task', title: 'Other assignment', description: '', status: 'To Do', priority: 'Low', created_by: 'other-user', assignee_id: 'other-user', due_date: null });
+ await login(page);
+ await expect(page.locator('.profile small')).toHaveText('Staff');
+ await expect(page.getByRole('link', { name: 'Kelola program', exact: true })).toHaveCount(0);
+ await page.getByRole('link', { name: 'Tasks', exact: true }).click();
+ const other = page.locator('article').filter({ has: page.getByRole('heading', { name: 'Other assignment' }) });
+ await expect(other).toHaveAttribute('draggable', 'false');
+ await expect(other.getByRole('button', { name: 'Edit', exact: true })).toHaveCount(0);
+ await expect(other.getByRole('combobox')).toHaveCount(0);
+ await expect(page.getByLabel('Status Review proposal')).toBeVisible();
 });
