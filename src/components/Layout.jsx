@@ -1,9 +1,11 @@
 import { useAuth } from '../lib/hooks';
 import { logout } from '../lib/api';
 import { roleLabel } from '../lib/roles';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { CalendarDays, ChevronLeft, ClipboardList, FolderKanban, LayoutDashboard, Menu, Package, Settings, Trophy, Users, WalletCards } from 'lucide-react';
+
+import DataState from './DataState';
 
 const navigationItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -32,7 +34,7 @@ export default function Layout(){
   {isMobileMenuOpen&&<button className="scrim" type="button" onClick={closeMobileMenu} aria-label="Close navigation"/>}
   <main className="main">
    <header className="topbar"><button className="icon-btn mobile-menu" type="button" aria-label="Buka navigasi" aria-controls="main-navigation" aria-expanded={isMobileMenuOpen} onClick={()=>setIsMobileMenuOpen(true)}><Menu/></button><div className="workspace-label">Depor CS HUB</div><div className="top-actions"><button className="secondary" onClick={signOut} disabled={logoutBusy}>{logoutBusy ? "Keluar…" : "Logout"}</button><div className="avatar">{user.name.slice(0,2).toUpperCase()}</div><div className="profile"><b>{user.name}</b><small>{roleLabel(user)}</small></div></div></header>
-   <div className="page"><Outlet/></div>
+   <div className="page"><Suspense fallback={<DataState loading />}><Outlet/></Suspense></div>
   </main>
  </div>
 }

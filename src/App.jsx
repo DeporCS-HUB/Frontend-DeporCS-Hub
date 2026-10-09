@@ -1,22 +1,21 @@
-import { useEffect } from 'react';
+import { lazy, useEffect } from 'react';
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
-import Dashboard from './pages/Dashboard';
-import Events from './pages/Events';
-import Finance from './pages/Finance';
-import Inventory from './pages/Inventory';
-import Programs from './pages/Programs';
-import Settings from './pages/Settings';
-import Tasks from './pages/Tasks';
-import Team from './pages/Team';
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Events = lazy(() => import('./pages/Events'));
+const Finance = lazy(() => import('./pages/Finance'));
+const Inventory = lazy(() => import('./pages/Inventory'));
+const Programs = lazy(() => import('./pages/Programs'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Tasks = lazy(() => import('./pages/Tasks'));
+const Team = lazy(() => import('./pages/Team'));
 import Login from './pages/Login';
-import DataState from './components/DataState';
 import { bootstrapSession } from './lib/api';
 import { useAuth } from './lib/hooks';
 function Protected() {
   const { user, loading } = useAuth();
   const location = useLocation();
-  if (loading) return <DataState loading />;
+  if (loading) return <Login from={location.pathname} />;
   return user ? <Outlet /> : <Navigate to="/login" state={{ from: location.pathname }} replace />;
 }
 export default function App() {
