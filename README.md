@@ -47,7 +47,7 @@ If Chromium is already installed, `PLAYWRIGHT_CHROME_PATH` can point to its exec
 
 The user-authorized Free development project `dajpnhkutkhgxwkjzvpg` has both migrations applied and two user-provisioned, confirmed, active accounts (staff/member). The companion backend passed **42 Java tests and 49 real Auth/Java/PostgREST checks**, including successful login, CRUD and independently verified persistence, member ownership and RLS restrictions, own-profile edits, refresh rotation, logout, and rejection of revoked refresh tokens. Live edits exposed an unsupported PATCH transport; the backend now uses Java HttpClient/JdkClientHttpRequestFactory and has a PATCH regression test. All temporary resource records and test sessions were cleaned up; both accounts remain available.
 
-Real React/browser acceptance (login → dashboard → CRUD → reload → refresh → logout) and browser cookie-policy behavior remain untested. Previous mocked frontend tests are separate evidence. The latest Auth advisor warns that leaked-password protection is disabled; it requires Pro, so the Free/$0 constraint is retained. Performance recommendations remain documented in the backend report. No merge or deployment was performed. Current commits skip new Actions runs to avoid additional cost. See CODEX_HANDOFF.md and the [backend development-validation report](https://github.com/DeporCS-HUB/Backend-DeporCS-Hub/blob/codex/supabase-main-flows/docs/live-development-validation.md).
+Real React/browser acceptance (login → dashboard → CRUD → reload → refresh → logout) and browser cookie-policy behavior remain untested. Previous mocked frontend tests are separate evidence. The latest Auth advisor warns that leaked-password protection is disabled; it requires Pro, so the Free/$0 constraint is retained. Performance recommendations remain documented in the backend report. At the integration-test checkpoint, no merge or deployment had occurred. Both PR #1s are now merged; hosting remains pending. Current commits skip new Actions runs to avoid additional cost. See CODEX_HANDOFF.md and the [backend development-validation report](https://github.com/DeporCS-HUB/Backend-DeporCS-Hub/blob/codex/supabase-main-flows/docs/live-development-validation.md).
 
 ## Cloud startup
 
@@ -56,3 +56,9 @@ Real React/browser acceptance (login → dashboard → CRUD → reload → refre
 - The included Dockerfile runs Vite's build in a Node build stage, then serves static files with nginx. Set runtime `API_PROXY_TARGET` to the private **Java backend** origin, without a trailing slash, and `PORT` (default 8080). nginx forwards `/api` unchanged and serves SPA routes. Leave `VITE_API_URL` unset for this model. The backend should allow the public frontend origin and use secure cookies behind HTTPS.
 
 The Docker frontend uses Node only to compile React/Vite. All backend runtime and API business logic use Java.
+
+## Vercel hosting
+
+The repository is public and PR #1 is merged. vercel.json defines the Vite install/build/output and SPA rewrite. Set **VITE_API_URL to the real backend HTTPS origin plus /api** before the Vercel build; missing configuration fails the build. The SPA rewrite is not an API proxy. No Supabase key belongs in the frontend.
+
+Use only a verified Hobby/$0 account. No live Vercel URL or browser acceptance is recorded yet. Follow the [backend Vercel runbook](https://github.com/DeporCS-HUB/Backend-DeporCS-Hub/blob/main/docs/vercel-deployment.md) for CORS, secure refresh cookies and deployment verification.
