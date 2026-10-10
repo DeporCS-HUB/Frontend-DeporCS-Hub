@@ -242,3 +242,47 @@ td b { display: block; font-weight: 650; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
 }
+
+.work-overview { display: flex; flex-wrap: wrap; gap: 12px 28px; padding: 16px 0; margin-bottom: 24px; border-top: 1px solid var(--surface-light); border-bottom: 1px solid var(--surface-light); color: var(--light-gray); }
+.work-overview a { color: var(--light-gray); text-decoration: none; }
+.work-overview b { color: var(--white); margin-right: 5px; font-variant-numeric: tabular-nums; }
+.workspace-grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr); gap: 18px; align-items: start; }
+.workspace-side { display: grid; gap: 18px; }
+.panel-title a { font-size: 12px; white-space: nowrap; }
+.kind-tabs { display: flex; gap: 8px; margin-bottom: 6px; }
+.kind-tabs button[aria-pressed="true"] { background: var(--navy); border-color: var(--dusty-red); }
+.program-focus-list article { border-bottom: 1px solid var(--surface-light); padding: 20px 0; }
+.program-focus-list article:last-child { border-bottom: 0; padding-bottom: 0; }
+.program-focus-top { display: flex; gap: 12px; justify-content: space-between; align-items: start; }
+.program-focus-top h3 { margin: 0 0 6px; font-size: 16px; }
+.program-focus-top p { font-size: 12px; margin: 0; }
+.program-focus-list article > p { margin: 12px 0; font-size: 13px; line-height: 1.6; }
+.program-focus-list small { color: var(--light-gray); font-size: 12px; }
+.program-focus-list .progress-cell { font-size: 12px; max-width: 360px; }
+.milestone-note { margin-top: 12px; color: var(--light-gray); font-size: 12px; border-left: 2px solid var(--dusty-red); padding-left: 10px; }
+.agenda-list article, .follow-up-list article { padding: 16px 0; border-bottom: 1px solid var(--surface-light); }
+.agenda-list article:last-child, .follow-up-list article:last-child { border-bottom: 0; padding-bottom: 0; }
+.agenda-list time { font-size: 12px; color: var(--light-gray); }
+.agenda-list h3, .follow-up-list h3 { font-size: 14px; line-height: 1.5; margin: 6px 0; }
+.agenda-list p { font-size: 13px; margin: 6px 0; }
+.agenda-list small, .follow-up-list small { color: var(--light-gray); font-size: 12px; }
+.follow-up-list .badge { display: block; width: fit-content; margin-top: 8px; }
+.staff-performance { margin-top: 22px; }
+.section-note { font-size: 12px; margin-top: -4px; margin-bottom: 22px; max-width: 750px; }
+.responsibilities { white-space: normal; min-width: 230px; }
+.responsibilities > span { display: block; margin: 6px 0; font-size: 12px; }
+.workspace-links { display: flex; flex-wrap: wrap; gap: 12px 24px; font-size: 13px; margin-top: 24px; }
+.program-table td { vertical-align: top; }
+.program-table td:first-child { min-width: 260px; max-width: 320px; white-space: normal; }
+.program-table td:nth-child(2) { white-space: normal; min-width: 125px; max-width: 160px; }
+.program-table td:nth-child(3), .program-table td:nth-child(4) { white-space: normal; min-width: 220px; max-width: 280px; }
+.program-table td:last-child .actions { margin-top: 8px; }
+.program-table b { margin: 8px 0; }
+.program-table details { font-size: 12px; margin-top: 10px; color: var(--light-gray); }
+.program-table details p { line-height: 1.6; }
+.program-table summary { cursor: pointer; }
+.program-table .progress-cell { margin-top: 12px; }
+.editor select[multiple] { min-height: 140px; }
+.editor label > small { color: var(--light-gray); font-size: 11px; }
+@media (max-width: 1050px) { .workspace-grid { grid-template-columns: 1fr; } .workspace-side { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 600px) { .workspace-side { grid-template-columns: 1fr; } .work-overview { gap: 10px 20px; font-size: 13px; } .program-focus-top h3 { font-size: 14px; } }
