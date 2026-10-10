@@ -14,7 +14,7 @@ async function mockApi(page, role = 'staff') {
   if (path === 'auth/refresh') return signedIn ? reply({ accessToken: 'development-token', user: profile, expiresIn: 3600 }) : reply('Session expired', 401);
   if (path === 'auth/login') { signedIn = true; return reply({ accessToken: 'development-token', user: profile, expiresIn: 3600 }); }
   if (path === 'auth/logout') { signedIn = false; return reply({ loggedOut: true }); }
-  if (path === 'dashboard') return reply({ overview: {proker: rows.programs.filter(p=>p.kind==='Proker').length, ukor: rows.programs.filter(p=>p.kind==='UKOR').length, openTasks: rows.tasks.filter(t=>t.status!=='Done').length, overdueTasks:0}, programFocus: rows.programs, upcomingMilestones: rows.programs.filter(p=>p.milestone_date), attentionTasks: rows.tasks.filter(t=>t.status!=='Done'), staffPerformance: role==='member' ? [{id:profile.id,name:profile.name,programs:rows.programs.filter(p=>p.assignee_ids?.includes(profile.id)),assignedTasks:rows.tasks.filter(t=>t.assignee_id===profile.id).length,completedTasks:rows.tasks.filter(t=>t.assignee_id===profile.id&&t.status==='Done').length,reviewTasks:0,overdueTasks:0,updatesLast30Days:progressUpdates,lastUpdate:null}] : [], summary, monthly: [{ month: 10, income: 0, expense: 0 }], inventory: [{ status: 'Available', quantity: 3 }], upcomingPrograms: [] });
+  if (path === 'dashboard') return reply({ overview: {proker: rows.programs.filter(p=>p.kind==='Proker').length, ukor: rows.programs.filter(p=>p.kind==='UKOR').length, openTasks: rows.tasks.filter(t=>t.status!=='Done').length, overdueTasks:0}, programFocus: rows.programs, upcomingMilestones: rows.programs.filter(p=>p.milestone_date), attentionTasks: rows.tasks.filter(t=>t.status!=='Done'), staffPerformance: role==='member' ? [{id:profile.id,name:profile.name,programs:rows.programs.filter(p=>p.assignee_ids?.includes(profile.id)),assignedTasks:rows.tasks.filter(t=>t.assignee_id===profile.id).length,completedTasks:rows.tasks.filter(t=>t.assignee_id===profile.id&&t.status==='Done').length,reviewTasks:0,overdueTasks:0,updatesLast30Days:progressUpdates,lastUpdate:null}] : [], summary: {...summary,totalPrograms:rows.programs.length,completedPrograms:rows.programs.filter(p=>p.status==='Completed').length,completedTasks:rows.tasks.filter(t=>t.status==='Done').length,pendingTasks:rows.tasks.filter(t=>t.status!=='Done').length}, monthly: [{ month: 10, income: 0, expense: 0 }], inventory: [{ status: 'Available', quantity: 3 }], upcomingPrograms: [] });
   if (path === 'profiles') return reply([profile,...extraProfiles]);
   if (path === 'profiles/me') {
    if (failProfile) return reply('Profile unavailable', 503);
@@ -144,7 +144,7 @@ test('member has read-only events and saves own profile across reload', async ({
 test('BPH sees management controls and Team supports role filtering', async ({ page }) => {
  await mockApi(page); await login(page);
  await expect(page.locator('.profile small')).toHaveText('BPH');
- await expect(page.getByRole('link', { name: 'Kelola program', exact: true })).toBeVisible();
+ await expect(page.getByRole('link', { name: 'Kelola', exact: true })).toBeVisible();
  await expect(page.locator('.swimmer, .bubble')).toHaveCount(0);
  await page.getByRole('link', { name: 'Tim', exact: true }).click();
  await expect(page.getByRole('heading', { name: 'Tim Departemen' })).toBeVisible();
@@ -160,7 +160,7 @@ test('Staff cannot operate another person\'s task and has no management controls
  mock.rows.tasks.push({ id: 'other-task', title: 'Other assignment', description: '', status: 'To Do', priority: 'Low', created_by: 'other-user', assignee_id: 'other-user', due_date: null });
  await login(page);
  await expect(page.locator('.profile small')).toHaveText('Staff');
- await expect(page.getByRole('link', { name: 'Kelola program', exact: true })).toHaveCount(0);
+ await expect(page.getByRole('link', { name: 'Kelola', exact: true })).toHaveCount(0);
  await page.getByRole('link', { name: 'Tugas', exact: true }).click();
  const other = page.locator('article').filter({ has: page.getByRole('heading', { name: 'Other assignment' }) });
  await expect(other).toHaveAttribute('draggable', 'false');
@@ -251,7 +251,7 @@ test('assigned Staff edits UKOR progress, sees updated dashboard and retains it 
  await login(page);
  await expect(page.getByRole('heading',{name:'Performa Staff'})).toBeVisible();
  await page.getByRole('button',{name:'UKOR',exact:true}).click();
- await expect(page.getByText('Persentase belum diisi')).toHaveCount(2);
+ await expect(page.locator('.program-chart-rows .chart-missing')).toHaveCount(2);
  await page.getByRole('link',{name:'Program',exact:true}).click();
  const row=page.getByRole('row').filter({has:page.getByText('Shared sports unit',{exact:true})});
  const other=page.getByRole('row').filter({has:page.getByText('Other sports unit',{exact:true})});
@@ -264,14 +264,14 @@ test('assigned Staff edits UKOR progress, sees updated dashboard and retains it 
  await dialog.getByLabel('Catatan progres',{exact:true}).fill('Two practice sessions recorded');
  await dialog.getByRole('button',{name:'Simpan',exact:true}).click();
  await expect(row.getByText('35%')).toBeVisible();
- await page.reload();await expect(page.getByText('Two practice sessions recorded')).toBeVisible();
+ await page.reload();await row.getByRole('button',{name:'Detail',exact:true}).click();await expect(page.getByText('Two practice sessions recorded')).toBeVisible();await page.keyboard.press('Escape');
  mock.failProgress();await row.getByRole('button',{name:'Update progres'}).click();
  await page.getByLabel('Progress (%)',{exact:true}).fill('70');await page.getByRole('button',{name:'Simpan',exact:true}).click();
  await expect(page.getByRole('alert')).toHaveText('Progress unavailable');await page.getByRole('button',{name:'Batal',exact:true}).click();
  await expect(row.getByText('35%')).toBeVisible();
  await page.getByRole('link',{name:'Dashboard',exact:true}).click();
  await page.getByRole('button',{name:'UKOR',exact:true}).click();
- await expect(page.getByText('Two practice sessions recorded')).toBeVisible();
+ await expect(page.getByLabel('Shared sports unit: 35%',{exact:true})).toBeVisible();
  await page.screenshot({path:testInfo.outputPath('staff-workspace.png'),fullPage:true});
 });
 
@@ -284,7 +284,48 @@ test('BPH selects multiple PJ and leaves unspecified dates and percentages empty
  await page.getByLabel('Agenda berikutnya').fill('Main event');await page.getByLabel('Tanggal agenda').fill('2026-10-31');
  await page.getByRole('button',{name:'Simpan',exact:true}).click();
  const row=page.getByRole('row').filter({has:page.getByText('Multi PJ activity',{exact:true})});
- await expect(row.getByText('UKOR',{exact:true})).toBeVisible();await expect(row.getByText('Belum diisi')).toHaveCount(2);
+ await expect(row.getByText('UKOR',{exact:true})).toBeVisible();await expect(row.getByText('Belum diisi')).toHaveCount(1);
  expect(mock.rows.programs[0].assignee_ids).toHaveLength(2);
  await row.getByRole('button',{name:'Update progres'}).click();await expect(page.getByLabel('Progress (%)',{exact:true})).toHaveValue('');
+});
+
+test('KPI charts distinguish unknown progress from zero and switch Staff metrics',async ({page})=>{
+ const mock=await mockApi(page,'member');
+ mock.rows.programs.push(
+  {id:'unknown',name:'Unknown activity',kind:'Proker',status:'Unspecified',progress:null,assignee_ids:[user.id]},
+  {id:'zero',name:'Zero activity',kind:'Proker',status:'Ongoing',progress:0,assignee_ids:[user.id]},
+  {id:'done',name:'Completed activity',kind:'UKOR',status:'Completed',progress:100,assignee_ids:[user.id]},
+ );
+ await login(page);
+ await expect(page.getByLabel('Unknown activity: belum diisi',{exact:true})).toBeVisible();
+ await expect(page.getByLabel('Zero activity: 0%',{exact:true})).toBeVisible();
+ await expect(page.locator('.program-chart-rows .chart-missing')).toHaveCount(1);
+ await expect(page.locator('.kpi').filter({hasText:'Progres tercatat'})).toContainText('2 / 3');
+ await expect(page.getByLabel('Development Staff: 1 selesai, 1 berjalan, 1 belum diisi',{exact:true})).toBeVisible();
+ await page.getByLabel('Metrik Staff').selectOption('tasks');
+ await expect(page.getByLabel('Development Staff: 0 dari 1 tugas selesai',{exact:true})).toBeVisible();
+ await page.getByLabel('Metrik Staff').selectOption('updates');
+ await expect(page.getByLabel('Development Staff: 0 pembaruan dalam 30 hari',{exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'UKOR',exact:true}).click();
+ await expect(page.getByLabel('Completed activity: 100%',{exact:true})).toBeVisible();
+ await expect(page.locator('.program-focus-list, .staff-performance, .follow-up-list')).toHaveCount(0);
+});
+
+test('long program and task descriptions stay inside a bounded mobile detail dialog',async ({page})=>{
+ await page.setViewportSize({width:375,height:812});
+ const mock=await mockApi(page,'member');const description='Complete activity description. '+('Long source material. '.repeat(70));const notes='Full progress notes. '+('Additional detail. '.repeat(70));
+ mock.rows.programs.push({id:'long',name:'Long activity',kind:'Proker',status:'Ongoing',progress:null,description,progress_notes:notes,pic:'Development Staff',assignee_ids:[user.id]});
+ mock.rows.tasks[0].description=description;
+ await login(page);await page.getByRole('button',{name:'Buka navigasi'}).click();await page.getByRole('link',{name:'Program',exact:true}).click();
+ await expect(page.getByText(description,{exact:true})).toHaveCount(0);await expect(page.getByText(notes,{exact:true})).toHaveCount(0);
+ const detail=page.getByRole('button',{name:'Detail',exact:true});await detail.click();
+ const dialog=page.getByRole('dialog');await expect(dialog.getByText(description,{exact:true})).toBeVisible();
+ const rect=await dialog.boundingBox();expect(rect.height).toBeLessThanOrEqual(812*.85);expect(rect.x+rect.width).toBeLessThanOrEqual(375);
+ expect(await dialog.locator('.detail-body').evaluate(el=>el.scrollHeight>el.clientHeight)).toBe(true);
+ await page.keyboard.press('Tab');await expect(dialog.getByRole('button',{name:'Tutup'})).toBeFocused();await page.keyboard.press('Tab');await expect(dialog.getByRole('region',{name:'Isi detail'})).toBeFocused();
+ await page.keyboard.press('Escape');await expect(dialog).toHaveCount(0);await expect(detail).toBeFocused();
+ await page.getByRole('button',{name:'Buka navigasi'}).click();await page.getByRole('link',{name:'Tugas',exact:true}).click();
+ await expect(page.getByText(description,{exact:true})).toHaveCount(0);
+ await page.getByRole('button',{name:'Detail',exact:true}).click();await expect(page.getByRole('dialog').getByText(description,{exact:true})).toBeVisible();
+ await page.keyboard.press('Escape');expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
