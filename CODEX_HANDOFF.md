@@ -1,5 +1,10 @@
 # Depor CS HUB — development checkpoint
 
+## Compact KPI dashboard — 10 October 2026
+
+Dashboard now contains four compact KPIs and three responsive bar charts: activity percentage, selectable Staff metrics, and activity status distribution. Long narrative panels and the Staff responsibility table were removed. Programs and Tasks keep descriptions in bounded, keyboard-accessible Detail dialogs. Unknown percentage remains distinct from zero. No backend, database, Auth or paid-service changes. See [program workspace](docs/program-workspace.md).
+
+
 ## Program workspace — 10 October 2026
 
 Dashboard now shows operational Proker/UKOR progress, upcoming milestones, follow-up tasks and Staff contributions. The Programs page supports multiple PJ accounts; assigned Staff can update their activity status, percentage and progress notes. BPH retains full editing and PJ assignment. Unknown progress remains blank instead of being treated as zero. See [program workspace](docs/program-workspace.md).

@@ -1,5 +1,10 @@
 # Depor CS HUB Frontend
 
+## Compact KPI dashboard — 10 October 2026
+
+Dashboard now contains four compact KPIs and three responsive bar charts: activity percentage, selectable Staff metrics, and activity status distribution. Long narrative panels and the Staff responsibility table were removed. Programs and Tasks keep descriptions in bounded, keyboard-accessible Detail dialogs. Unknown percentage remains distinct from zero. No backend, database, Auth or paid-service changes. See [program workspace](docs/program-workspace.md).
+
+
 ## Program workspace — 10 October 2026
 
 Dashboard now shows operational Proker/UKOR progress, upcoming milestones, follow-up tasks and Staff contributions. The Programs page supports multiple PJ accounts; assigned Staff can update their activity status, percentage and progress notes. BPH retains full editing and PJ assignment. Unknown progress remains blank instead of being treated as zero. See [program workspace](docs/program-workspace.md).
@@ -10,7 +15,7 @@ React 19 + Vite. Main screens use the companion Java 21/Spring Boot API in `Depo
 
 ## Current department roles
 
-The UI uses **BPH** (management) and **Staff** (executing members). The backend returns a trusted departmentRole while keeping stored legacy profile.role values compatible with existing accounts and RLS: staff/admin -> BPH, member -> Staff. The development directory contains 4 BPH and 13 Staff accounts using `name@depor.com`; business-data population remains deferred. See [role adjustment](https://github.com/DeporCS-HUB/Backend-DeporCS-Hub/blob/main/docs/role-adjustment.md) for permissions and rollout.
+The UI uses **BPH** (management) and **Staff** (executing members). The backend returns a trusted departmentRole while keeping stored legacy profile.role values compatible with existing accounts and RLS: staff/admin -> BPH, member -> Staff. The development directory contains 4 BPH and 13 Staff accounts using `name@depor.com`; the activity roster is populated in development. See [role adjustment](https://github.com/DeporCS-HUB/Backend-DeporCS-Hub/blob/main/docs/role-adjustment.md) for permissions and rollout.
 
 ## Depor interface
 
@@ -55,7 +60,7 @@ npx playwright install chromium
 npm run test:browser
 ```
 
-The suite has **22 unit tests** covering API/session refresh concurrency, expiry, failed mutations, pagination, logout, role compatibility and cache invalidation/account isolation. **15 Playwright browser tests** cover login/routing, CRUD and reload, failed writes, BPH/Staff permissions, profile editing, cached navigation, desktop collapsed navigation and mobile forms at 375 px. Build, lint, unit tests and browser tests pass locally. Desktop/mobile screenshots are checked manually. Browser tests use a **mocked API**; they do not certify live Supabase login, hosted persistence or browser cookie behavior.
+The suite has **22 unit tests** covering API/session refresh concurrency, expiry, failed mutations, pagination, logout, role compatibility and cache invalidation/account isolation. **17 Playwright browser tests** cover login/routing, CRUD and reload, failed writes, BPH/Staff permissions, profile editing, cached navigation, desktop collapsed navigation and mobile forms at 375 px. Build, lint, unit tests and browser tests pass locally. Desktop/mobile screenshots are checked manually. Browser tests use a **mocked API**; they do not certify live Supabase login, hosted persistence or browser cookie behavior.
 
 If Chromium is already installed, `PLAYWRIGHT_CHROME_PATH` can point to its executable. CI runs build/lint/unit and browser tests. Charts and routes load in separate chunks; the initial app bundle stays near 264 kB before gzip. No external font request or new dependency is added for the Depor theme.
 
