@@ -1,5 +1,12 @@
 # Depor CS HUB — development checkpoint
 
+## Program workspace — 10 October 2026
+
+Dashboard now shows operational Proker/UKOR progress, upcoming milestones, follow-up tasks and Staff contributions. The Programs page supports multiple PJ accounts; assigned Staff can update their activity status, percentage and progress notes. BPH retains full editing and PJ assignment. Unknown progress remains blank instead of being treated as zero. See [program workspace](docs/program-workspace.md).
+
+This checkpoint supersedes historical statements below about empty business tables and read-only Staff program access. Original Auth accounts and stored legacy roles remain unchanged. No paid resources were added.
+
+
 Current checkpoint: 9 October 2026, Depor UI redesign and account cleanup. Read AGENTS.md and README.md before continuing. Dated sections below retain historical validation; the current checkpoint supersedes older account/deployment state.
 
 ## Current UI and account checkpoint

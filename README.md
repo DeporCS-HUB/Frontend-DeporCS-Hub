@@ -1,5 +1,10 @@
 # Depor CS HUB Frontend
 
+## Program workspace — 10 October 2026
+
+Dashboard now shows operational Proker/UKOR progress, upcoming milestones, follow-up tasks and Staff contributions. The Programs page supports multiple PJ accounts; assigned Staff can update their activity status, percentage and progress notes. BPH retains full editing and PJ assignment. Unknown progress remains blank instead of being treated as zero. See [program workspace](docs/program-workspace.md).
+
+
 React 19 + Vite. Main screens use the companion Java 21/Spring Boot API in `DeporCS-HUB/Backend-DeporCS-Hub`; no dummy department records are used.
 
 
@@ -50,11 +55,11 @@ npx playwright install chromium
 npm run test:browser
 ```
 
-The suite has **22 unit tests** covering API/session refresh concurrency, expiry, failed mutations, pagination, logout, role compatibility and cache invalidation/account isolation. **13 Playwright browser tests** cover login/routing, CRUD and reload, failed writes, BPH/Staff permissions, profile editing, cached navigation, desktop collapsed navigation and mobile forms at 375 px. Build, lint, unit tests and browser tests pass locally. Desktop/mobile screenshots are checked manually. Browser tests use a **mocked API**; they do not certify live Supabase login, hosted persistence or browser cookie behavior.
+The suite has **22 unit tests** covering API/session refresh concurrency, expiry, failed mutations, pagination, logout, role compatibility and cache invalidation/account isolation. **15 Playwright browser tests** cover login/routing, CRUD and reload, failed writes, BPH/Staff permissions, profile editing, cached navigation, desktop collapsed navigation and mobile forms at 375 px. Build, lint, unit tests and browser tests pass locally. Desktop/mobile screenshots are checked manually. Browser tests use a **mocked API**; they do not certify live Supabase login, hosted persistence or browser cookie behavior.
 
 If Chromium is already installed, `PLAYWRIGHT_CHROME_PATH` can point to its executable. CI runs build/lint/unit and browser tests. Charts and routes load in separate chunks; the initial app bundle stays near 264 kB before gzip. No external font request or new dependency is added for the Depor theme.
 
-The authorized Free development project `dajpnhkutkhgxwkjzvpg` has both migrations applied and 17 active confirmed Auth accounts (4 BPH, 13 Staff) using `name@depor.com`. The two original test accounts, profiles, identities and sessions have been deleted. Original roster UUIDs/passwords are preserved. Business tables remain empty until the user supplies department records.
+The authorized Free development project `dajpnhkutkhgxwkjzvpg` has both migrations applied and 17 active confirmed Auth accounts (4 BPH, 13 Staff) using `name@depor.com`. The two original test accounts, profiles, identities and sessions have been deleted. Original roster UUIDs/passwords are preserved. The user-supplied activity roster is now populated in development.
 
 Earlier backend evidence: **42 Java tests and 49 real Auth/Java/PostgREST checks** with the original test accounts covered CRUD, persistence, RLS, profile edits, refresh rotation and logout. This is historical evidence, not a retest of the current roster. See CODEX_HANDOFF.md and the [backend validation report](https://github.com/DeporCS-HUB/Backend-DeporCS-Hub/blob/main/docs/live-development-validation.md).
 
