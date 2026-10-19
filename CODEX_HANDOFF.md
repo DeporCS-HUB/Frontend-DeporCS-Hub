@@ -1,5 +1,10 @@
 # Depor CS HUB — development checkpoint
 
+## Revisi komposisi referensi — 19 Oktober 2026
+
+Pengguna menilai iterasi sebelumnya masih menyerupai UI lama. Revisi ini mengubah susunan visual, bukan hanya KPI: empat KPI 2×2 di kiri/chart progres vertikal kanan; Staff dan donut berdampingan di bawah; workspace inset, sidebar ikon default, radius panel 18 px, login panel terpisah. Gambar referensi diperiksa langsung; token warna tetap sama. `src/workspace.css` memuat revisi layout setelah baseline styles. Validasi: lint/build, 23 unit test dan 25 browser flow mock; screenshot 375/768/1440 px diperiksa. Backend/database/Auth tidak berubah. Lihat DESIGN.md untuk acceptance komposisi.
+
+
 ## Iterasi implementasi — 19 Oktober 2026
 
 Filter server dan pagination exact-next untuk enam resource; dashboard global recorded/status counts; assignment Staff membawa status/progress langsung; KPI dominan dan donut; scroll chart dan halaman list pendek. Migration `20261019042816_dashboard_coverage.sql` sudah diterapkan melalui apply_migration; nama file mengikuti versi yang tercatat di hosted. Jangan mengulang atau seed.

@@ -22,7 +22,7 @@ export default function Layout(){
  const [logoutBusy, setLogoutBusy] = useState(false);
  async function signOut(){ setLogoutBusy(true); try { await logout(); } catch { /* Error remains visible on the login screen. */ } finally { setLogoutBusy(false); } }
  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
- const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+ const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
  const closeMobileMenu = () => setIsMobileMenuOpen(false);
  const sidebarClassName = ['sidebar', isMobileMenuOpen && 'open', isSidebarCollapsed && 'collapsed'].filter(Boolean).join(' ');
  return <div className="app-shell"><a className="skip-link" href="#page-content">Lewati navigasi</a>

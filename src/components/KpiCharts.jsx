@@ -8,7 +8,13 @@ const label = name => name.match(/\(([A-Za-z0-9]+)\)$/)?.[1] || name.replace(/^U
 function Legend() { return <div className="kpi-chart-legend">{groups.map(g => <span key={g.key}><i className={`chart-${g.key}`} />{g.label}</span>)}</div>; }
 function Segments({ values, total }) { return <div className="chart-track chart-stack" aria-hidden="true">{groups.map(g => values[g.key] > 0 && <span key={g.key} className={`chart-${g.key}`} style={{ width: `${values[g.key] / total * 100}%` }} title={`${g.label}: ${values[g.key]}`}>{values[g.key]}</span>)}</div>; }
 export function ProgramChart({ programs }) {
- return <figure className="kpi-chart" aria-label="Grafik persentase progres kegiatan"><div className="percent-axis" aria-hidden="true">{[0,25,50,75,100].map(n => <span key={n}>{n}%</span>)}</div><div className="chart-rows program-chart-rows" tabIndex={0} role="region" aria-label="Data grafik kegiatan">{programs.map(p => <div className="chart-row" key={p.id} aria-label={`${p.name}: ${p.progress == null ? 'belum diisi' : `${p.progress}%`}`}><span className="chart-label" title={p.name}>{label(p.name)}</span><div className={`chart-track percent-track ${p.progress == null ? 'chart-missing' : ''}`} aria-hidden="true" title={p.progress == null ? 'Belum diisi' : `${p.progress}%`}><span className="chart-done" style={{width:`${p.progress ?? 0}%`}} /></div><b>{p.progress == null ? '—' : `${p.progress}%`}</b></div>)}</div>{!programs.length ? <p className="data-state">Belum ada kegiatan.</p> : <figcaption>— Belum diisi</figcaption>}</figure>;
+ return <figure className="kpi-chart program-bars" aria-label="Grafik persentase progres kegiatan">
+ <div className="percent-axis" aria-hidden="true">{[100,75,50,25,0].map(n => <span key={n}>{n}%</span>)}</div>
+ <div className="chart-rows program-chart-rows" tabIndex={0} role="region" aria-label="Data grafik kegiatan" style={{'--program-columns': Math.max(1, Math.min(programs.length,6))}}>
+ {programs.map(p => <div className="chart-row program-column" key={p.id} aria-label={`${p.name}: ${p.progress == null ? 'belum diisi' : `${p.progress}%`}`}>
+ <b>{p.progress == null ? '—' : `${p.progress}%`}</b><div className={`chart-track percent-track ${p.progress == null ? 'chart-missing' : ''}`} aria-hidden="true"><span className={p.status === 'Completed' ? 'chart-done' : 'chart-running'} style={{height:`${p.progress ?? 0}%`}} /></div><span className="chart-label" title={p.name}>{label(p.name)}</span>
+ </div>)}
+ </div>{!programs.length ? <p className="data-state">Belum ada kegiatan.</p> : <figcaption>— Belum diisi</figcaption>}</figure>;
 }
 export function StaffChart({ staff, programs, metric }) {
  const byId = new Map(programs.map(p => [p.id,p]));

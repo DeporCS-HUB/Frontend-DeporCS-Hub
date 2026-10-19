@@ -220,6 +220,8 @@ test('dark workspace keeps accessible navigation when collapsed', async ({ page 
  const palette = await page.evaluate(() => { const css = getComputedStyle(document.documentElement); return ['--background','--dark-red','--white'].map(key => css.getPropertyValue(key).trim()); });
  expect(palette).toEqual(['#09090B','#5F3031','#F5F6F7']);
  await page.screenshot({ path: testInfo.outputPath('dashboard-desktop.png'), fullPage: true });
+ await expect(page.locator('.sidebar')).toHaveClass(/collapsed/);
+ await page.getByRole('button', { name: 'Perluas navigasi' }).click();
  await page.getByRole('button', { name: 'Ringkas navigasi' }).click();
  const program = page.getByRole('link', { name: 'Program', exact: true });
  await expect(program).toBeVisible(); await program.click();
@@ -367,4 +369,17 @@ test('failed global search reports error, retains query and recovers on retry',a
  await page.route('**/api/events?**',route=>route.fulfill({status:503,json:{error:{message:'Search unavailable'}}}));
  await page.getByLabel('Cari kegiatan').fill('Court');await expect(page.getByRole('alert')).toContainText('Search unavailable');await expect(page.getByLabel('Cari kegiatan')).toHaveValue('Court');
  await page.unroute('**/api/events?**');await page.getByRole('button',{name:'Coba kembali'}).click();await expect(page.getByRole('cell',{name:'Find venue'})).toBeVisible();
+});
+
+
+for(const width of [375,768,1440]) test(`reference composition and readable bars at ${width}px`,async({page},testInfo)=>{
+ await page.setViewportSize({width,height:1000});const mock=await mockApi(page,'member');
+ for(let n=0;n<14;n++)mock.rows.programs.push({id:`visual-${n}`,name:`${n<5?'Program':'UKOR'} ${n+1}`,kind:n<5?'Proker':'UKOR',status:n===0?'Completed':n===4?'Unspecified':'Ongoing',progress:n===0?100:n===4?null:Math.min(90,n*15),pic:'Assigned team',assignee_ids:[user.id]});
+ await login(page);await expect(page.getByLabel('Program 1: 100%',{exact:true})).toBeVisible();
+ const metrics=await page.locator('.kpi-grid').boundingBox(),bars=await page.locator('.program-chart-card').boundingBox();
+ if(width>600){expect(bars.x).toBeGreaterThan(metrics.x+metrics.width-1);expect(Math.abs(metrics.y-bars.y)).toBeLessThan(2);}else expect(bars.y).toBeGreaterThan(metrics.y+metrics.height-1);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ await page.screenshot({path:testInfo.outputPath(`reference-dashboard-${width}.png`),fullPage:true});
+ await page.goto('/login');await page.getByRole('button',{name:'Logout',exact:true}).click();await expect(page.getByRole('heading',{name:'Masuk ke akun'})).toBeVisible();
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:testInfo.outputPath(`reference-login-${width}.png`),fullPage:true});
 });
