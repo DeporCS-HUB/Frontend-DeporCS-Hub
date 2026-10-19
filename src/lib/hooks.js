@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
-import { api, authStore, dataStore, cachedResource, invalidateResource } from './api';
+import { api, authStore, dataStore, cachedResponse, invalidateResource } from './api';
 export function useAuth() { return useSyncExternalStore(authStore.subscribe, authStore.getSnapshot); }
 export function useResource(path) {
   const revision = useSyncExternalStore(dataStore.subscribe, dataStore.getSnapshot);
@@ -8,12 +8,12 @@ export function useResource(path) {
   const key = JSON.stringify([path, revision, version, user?.id, user?.role, user?.departmentRole]);
   const [state, setState] = useState(null);
   const reload = useCallback(() => { invalidateResource(path); setVersion(value => value + 1); }, [path]);
-  const cached = cachedResource(path);
-  const current = state?.key === key ? state : { key, data: cached ?? null, loading: cached === undefined, error: '' };
+  const cached = cachedResponse(path);
+  const current = state?.key === key ? state : { key, data: cached?.data ?? null, meta: cached?.meta, loading: cached === undefined, error: '' };
   useEffect(() => {
     let active = true;
-    api(path).then(({ data }) => {
-      if (active) setState({ key, data, loading: false, error: '' });
+    api(path).then(({ data, meta }) => {
+      if (active) setState({ key, data, meta, loading: false, error: '' });
     }).catch(error => {
       if (active) setState({ key, data: null, loading: false, error: error.message });
     });

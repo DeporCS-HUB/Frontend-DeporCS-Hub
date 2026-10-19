@@ -31,7 +31,7 @@ Data operasional berasal dari backend/Supabase. Hardcoded hanya sesuai untuk kon
 
 ## Fitur baseline
 
-Login dan sesi; KPI/chart dashboard; Proker/UKOR multiple PJ; update progres oleh PJ/BPH; kanban tugas; catatan keuangan; inventaris; events; direktori tim; edit nama profile sendiri. Deskripsi panjang dibaca melalui Detail.
+Login dan sesi; KPI/chart dashboard; Proker/UKOR multiple PJ; update progres oleh PJ/BPH; kanban tugas; catatan keuangan; inventaris; events; direktori tim; edit nama profile sendiri. Deskripsi panjang dibaca melalui Detail. Pencarian/filter berjalan di server untuk seluruh hasil; list dipaginasi 10 program, 12 aset, atau 20 record lainnya per halaman.
 
 Belum tersedia: upload LPJ/lampiran, undangan akun, role administration UI, absensi, notifikasi, atau pengiriman izin venue. Lihat [PRD.md](PRD.md) untuk batas implementasi.
 
@@ -95,5 +95,5 @@ Mulai dari [TASKS.md](TASKS.md). Referensi dashboard baru adalah arahan desain l
 ## Panduan implementasi lanjutan
 
 - [Checkpoint pengembangan](CODEX_HANDOFF.md)
-- [loading performance](/workspace/scratch/b6f97be7f072/DeporCS-Hub-UI/docs/loading-performance.md)
-- [program workspace](/workspace/scratch/b6f97be7f072/DeporCS-Hub-UI/docs/program-workspace.md)
+- [loading performance](docs/loading-performance.md)
+- [program workspace](docs/program-workspace.md)

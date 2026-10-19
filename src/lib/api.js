@@ -10,7 +10,8 @@ let dataRevision = 0;
 const reads = createReadCache();
 let sessionGeneration = 0;
 const scope = user => JSON.stringify([user?.id, user?.role, user?.departmentRole]);
-export const cachedResource = path => reads.peek(path)?.data;
+export const cachedResponse = path => reads.peek(path);
+export const cachedResource = path => cachedResponse(path)?.data;
 export const invalidateResource = path => reads.clear(path);
 export const dataStore = {
   subscribe(listener) { dataListeners.add(listener); return () => dataListeners.delete(listener); },

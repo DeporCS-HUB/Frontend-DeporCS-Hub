@@ -325,3 +325,22 @@ td b { display: block; font-weight: 650; }
  .detail-dialog { padding: 20px 16px; max-height: 85dvh; }
  .detail-header h2 { font-size: 18px; }
 }
+
+/* Composition follows the supplied compact dashboard reference. */
+.kpi-featured { background: var(--white); color: var(--black); border-color: var(--white); }
+.kpi-featured small, .kpi-featured strong span { color: var(--gray); }
+.chart-coverage { color: var(--light-gray); font-size: 11px; margin: 12px 0 0; }
+.status-donut-layout { display: flex; align-items: center; justify-content: center; gap: 48px; padding: 8px 0; }
+.status-donut { width: 160px; height: 160px; position: relative; flex-shrink: 0; }
+.status-donut svg { width: 100%; height: 100%; }
+.status-donut circle { stroke-width: 14; }
+.donut-base { fill: none; stroke: var(--surface-light); }
+.donut-done { stroke: var(--white); }.donut-running { stroke: var(--dusty-red); }.donut-planned { stroke: var(--navy); }.donut-unknown { stroke: var(--gray); }.donut-cancelled { stroke: var(--light-gray); }
+.status-donut > div { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.status-donut strong { font-size: 32px; }.status-donut small { color: var(--light-gray); font-size: 10px; }
+.donut-legend { min-width: 170px; margin: 0 !important; display: grid; gap: 12px; }
+.donut-legend > div { display: flex; gap: 10px; align-items: center; }.donut-legend i { width: 9px; height: 9px; }.donut-legend b { margin-left: auto; color: var(--white); font-variant-numeric: tabular-nums; }
+@media (max-width: 600px) { .status-donut-layout { gap: 22px; flex-wrap: wrap; }.status-donut { width: 140px; height: 140px; }.donut-legend { min-width: 130px; } }
+
+.program-chart-rows { max-height: 320px; overflow-y: auto; scrollbar-width: thin; padding-right: 6px; }
+.program-chart-rows:focus-visible { outline: 2px solid var(--dusty-red); outline-offset: 3px; }
