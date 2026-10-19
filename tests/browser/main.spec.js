@@ -217,8 +217,8 @@ test('dark workspace keeps accessible navigation when collapsed', async ({ page 
  await expect(page.getByRole('heading',{name:'Performa Staff'})).toBeVisible();
  await expect(page.getByRole('heading',{name:'Progres Proker & UKOR'})).toBeVisible();
  await expect(page.locator('.hero, .hero-time')).toHaveCount(0);
- const palette = await page.evaluate(() => { const css = getComputedStyle(document.documentElement); return ['--background','--dark-red','--white'].map(key => css.getPropertyValue(key).trim()); });
- expect(palette).toEqual(['#09090B','#5F3031','#F5F6F7']);
+ const palette = await page.evaluate(() => { const css = getComputedStyle(document.documentElement); return ['--background','--blue','--red'].map(key => css.getPropertyValue(key).trim()); });
+ expect(palette).toEqual(['#0B1426','#2563EB','#DC2626']);
  await page.screenshot({ path: testInfo.outputPath('dashboard-desktop.png'), fullPage: true });
  await expect(page.locator('.sidebar')).toHaveClass(/collapsed/);
  await page.getByRole('button', { name: 'Perluas navigasi' }).click();
@@ -382,4 +382,31 @@ for(const width of [375,768,1440]) test(`reference composition and readable bars
  await page.screenshot({path:testInfo.outputPath(`reference-dashboard-${width}.png`),fullPage:true});
  await page.goto('/login');await page.getByRole('button',{name:'Logout',exact:true}).click();await expect(page.getByRole('heading',{name:'Masuk ke akun'})).toBeVisible();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:testInfo.outputPath(`reference-login-${width}.png`),fullPage:true});
+});
+
+function contrast(a,b) {
+ const luminance=rgb=>rgb.match(/[\d.]+/g).slice(0,3).map(v=>Number(v)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4).reduce((sum,v,i)=>sum+v*[.2126,.7152,.0722][i],0);
+ const [dark,light]=[luminance(a),luminance(b)].sort((x,y)=>x-y);return (light+.05)/(dark+.05);
+}
+test('blue/red theme keeps rendered text, controls and chart colors readable',async({page})=>{
+ const mock=await mockApi(page,'member');
+ for(const [n,status]of ['Completed','Ongoing','Planning','Unspecified','Cancelled'].entries())mock.rows.programs.push({id:`color-${n}`,name:`Color activity ${n}`,kind:'Proker',status,progress:n===3?null:n===0?100:25,assignee_ids:[user.id]});
+ await login(page);
+ const pairs=await page.evaluate(()=>{
+  const css=selector=>getComputedStyle(document.querySelector(selector));
+  const text=selector=>({name:selector,fg:css(selector).color,bg:css(selector).backgroundColor});
+  const panel=css('.staff-chart-card').backgroundColor;
+  return {
+   text:[text('.sidebar a.active'),text('.kpi-featured'),text('.kind-tabs button[aria-pressed="true"]'),...['done','running','planned','unknown','cancelled'].map(key=>text(`.staff-chart-rows .chart-${key}`))],
+   secondary:{name:'chart label',fg:css('.program-column .chart-label').color,bg:css('.program-chart-card').backgroundColor},
+   graphic:['done','running','planned','unknown','cancelled'].map(key=>({name:key,fg:css(`.donut-${key}`).stroke,bg:panel}))
+  };
+ });
+ for(const pair of [...pairs.text,pairs.secondary])expect(contrast(pair.fg,pair.bg),pair.name).toBeGreaterThanOrEqual(4.5);
+ for(const pair of pairs.graphic)expect(contrast(pair.fg,pair.bg),pair.name).toBeGreaterThanOrEqual(3);
+ await page.getByRole('link',{name:'Keuangan',exact:true}).click();await expect(page.locator('.recharts-responsive-container')).toBeVisible();
+ const legend=await page.locator('.chart-legend i').evaluateAll(els=>els.map(el=>getComputedStyle(el).borderTopColor));expect(legend).toEqual(['rgb(96, 165, 250)','rgb(255, 90, 90)']);
+ await page.getByRole('button',{name:'Logout',exact:true}).click();await expect(page.getByRole('heading',{name:'Masuk ke akun'})).toBeVisible();
+ const loginColors=await page.evaluate(()=>{const btn=getComputedStyle(document.querySelector('.login-card .primary'));const input=document.querySelector('.login-card input');return {button:[btn.color,btn.backgroundColor],placeholder:[getComputedStyle(input,'::placeholder').color,getComputedStyle(input).backgroundColor]};});
+ expect(contrast(...loginColors.button)).toBeGreaterThanOrEqual(4.5);expect(contrast(...loginColors.placeholder)).toBeGreaterThanOrEqual(4.5);
 });

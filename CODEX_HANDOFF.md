@@ -1,5 +1,10 @@
 # Depor CS HUB — development checkpoint
 
+## Palet biru/merah — 19 Oktober 2026
+
+Permintaan terbaru mengganti palet muted dengan biru/merah Depor Fasilkom dan kontras lebih tinggi. Token aktif di styles.css: blue #2563EB, blue-strong #1D4ED8, red #DC2626, chart blue #60A5FA/red #FF5A5A; background navy #0B1426, surface #172B49. Ini menggantikan ketentuan palet lama pada checkpoint historis. Charts.jsx memakai CSS variables agar chart keuangan konsisten. Layout PR #10 dipertahankan. Pasangan kontras render diuji melalui browser, 23 unit + 26 browser mock, lint/build; tidak mengklaim audit aksesibilitas menyeluruh atau login hosted.
+
+
 ## Revisi komposisi referensi — 19 Oktober 2026
 
 Pengguna menilai iterasi sebelumnya masih menyerupai UI lama. Revisi ini mengubah susunan visual, bukan hanya KPI: empat KPI 2×2 di kiri/chart progres vertikal kanan; Staff dan donut berdampingan di bawah; workspace inset, sidebar ikon default, radius panel 18 px, login panel terpisah. Gambar referensi diperiksa langsung; token warna tetap sama. `src/workspace.css` memuat revisi layout setelah baseline styles. Validasi: lint/build, 23 unit test dan 25 browser flow mock; screenshot 375/768/1440 px diperiksa. Backend/database/Auth tidak berubah. Lihat DESIGN.md untuk acceptance komposisi.
