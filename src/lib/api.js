@@ -17,6 +17,10 @@ export const dataStore = {
   subscribe(listener) { dataListeners.add(listener); return () => dataListeners.delete(listener); },
   getSnapshot() { return dataRevision; },
 };
+export function refreshData() {
+  reads.clear(); dataRevision++;
+  dataListeners.forEach(listener => listener());
+}
 export const authStore = {
   subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
   getSnapshot() { return snapshot; },
@@ -102,9 +106,7 @@ export async function api(path, options = {}) {
   };
   const result = cacheable ? await reads.read(path, run, { force }) : await requestWithSession(path, requestOptions);
   if (method !== 'GET' && !path.startsWith('/auth/')) {
-    reads.clear();
-    dataRevision++;
-    dataListeners.forEach(listener => listener());
+    refreshData();
   }
   return result;
 }
