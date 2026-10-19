@@ -25,6 +25,8 @@ Validasi: Java 62 tes; frontend lint/build dan 23 unit test; empat suite SQL dis
 
 Revisi visual berikutnya divalidasi dengan 25 browser flow mock, termasuk geometri komposisi dan screenshot login/dashboard 375/768/1440 px; tidak mengubah database/Auth.
 
+- [x] UX-04: palet biru/merah Depor dengan kontras lebih tinggi; label, kontrol dan chart memakai token konsisten; tes kontras browser dan screenshot 375/768/1440 px.
+
 ## Pekerjaan berikutnya
 
 | ID | Prioritas | Pekerjaan | Kriteria selesai |

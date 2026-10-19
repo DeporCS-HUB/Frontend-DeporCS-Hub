@@ -3,10 +3,10 @@ body { background: var(--surface); }
 .app-shell { padding: 12px 0; }
 .sidebar { inset: 12px auto 12px 12px; width: 216px; padding: 20px 12px; border: 0; border-radius: 20px; background: var(--surface); }
 .brand { gap: 9px; padding-inline: 4px; margin-bottom: 30px; }
-.brand-mark { width: 34px; height: 34px; border-radius: 10px; background: var(--white); color: var(--black); font-size: 22px; }
+.brand-mark { width: 34px; height: 34px; border-radius: 10px; background: var(--blue); color: var(--white); box-shadow: inset 0 -4px var(--red-bright); font-size: 22px; }
 .brand b { font-size: 20px; }.brand small { font-size: 8px; }
 .sidebar nav { gap: 9px; }.sidebar a { min-height: 42px; border: 0; border-radius: 12px; font-size: 12px; }
-.sidebar a.active { background: var(--white); color: var(--black); }
+.sidebar a.active { background: var(--blue-strong); color: var(--white); box-shadow: inset 0 0 0 1px var(--blue-bright); }
 .sidebar.collapsed { width: 64px; padding-inline: 10px; }
 .sidebar.collapsed .brand { margin-bottom: 30px; }
 .sidebar.collapsed a { padding: 11px 0; }
@@ -16,7 +16,7 @@ body { background: var(--surface); }
 .topbar { height: 66px; padding: 0 28px; top: 12px; border-bottom: 0; background: var(--background); }
 .workspace-label { font-size: 11px; letter-spacing: .13em; }.workspace-label span { font-size: 10px; }
 .top-actions { gap: 10px; }.top-actions .secondary { order: 2; min-height: 32px; padding: 7px 10px; border-radius: 10px; font-size: 10px; }
-.avatar { border-radius: 50%; width: 30px; height: 30px; background: var(--dark-red); border: 0; font-size: 10px; }
+.avatar { border-radius: 50%; width: 30px; height: 30px; background: var(--red); border: 0; font-size: 10px; }
 .profile { max-width: 140px; }.profile b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }.profile small { font-size: 10px; }
 .page { padding: 8px 28px 28px; max-width: 1440px; }
 h1 { font-size: clamp(24px,2.4vw,31px); font-weight: 600; letter-spacing: -.045em; }
@@ -25,7 +25,7 @@ h1 { font-size: clamp(24px,2.4vw,31px); font-weight: 600; letter-spacing: -.045e
 .dashboard-meta { flex-direction: row; align-items: center; gap: 10px; }
 .dashboard-meta time { display: flex; align-items: center; gap: 7px; padding: 8px 11px; font-size: 10px; background: var(--surface); border-radius: 10px; }
 .badge { border: 0; border-radius: 6px; font-size: 10px; }
-.card { border: 0; border-radius: 18px; padding: 20px; }
+.card { border: 1px solid var(--border); border-radius: 18px; padding: 20px; }
 .panel-title { margin-bottom: 14px; }.panel-title h3 { font-size: 13px; font-weight: 550; letter-spacing: -.02em; }.panel-title a { font-size: 10px; }
 .primary, .secondary, .danger { border-radius: 10px; font-size: 12px; }
 input, select, textarea { border-radius: 10px; }
@@ -34,12 +34,12 @@ input, select, textarea { border-radius: 10px; }
 .kpi { min-height: 147px; position: relative; display: flex; flex-direction: column; justify-content: space-between; padding: 18px; }
 .kpi small { font-size: 11px; padding-right: 30px; }.kpi strong { font-size: 36px; font-weight: 550; letter-spacing: -.05em; margin: 16px 0 4px; }.kpi strong span { font-size: 14px; letter-spacing: -.02em; }
 .kpi-open { position: absolute; right: 14px; top: 14px; width: 29px; height: 29px; display: grid; place-items: center; border-radius: 50%; background: var(--surface-light); color: var(--white); }
-.kpi-open svg { width: 14px; height: 14px; }.kpi-featured .kpi-open { color: var(--white); background: var(--dark-red); }.kpi-open:hover { color: var(--white); background: var(--dusty-red); }
+.kpi-open svg { width: 14px; height: 14px; }.kpi-featured .kpi-open { color: var(--white); background: var(--blue-strong); border: 1px solid var(--blue-light); }.kpi-open:hover { color: var(--white); background: var(--red-strong); }
 .program-chart-card { position: relative; min-height: 306px; padding-bottom: 14px; }
 .program-chart-card .panel-title { padding-right: 130px; min-height: 30px; }
 .program-chart-card .kind-tabs { position: absolute; right: 18px; top: 17px; gap: 3px; padding: 3px; border-radius: 9px; background: var(--background); margin: 0; }
 .kind-tabs button { min-height: 24px; padding: 4px 9px; font-size: 10px; border: 0; background: transparent; border-radius: 6px; }
-.kind-tabs button[aria-pressed="true"] { background: var(--surface-light); color: var(--white); }
+.kind-tabs button[aria-pressed="true"] { background: var(--blue-strong); color: var(--white); box-shadow: inset 0 0 0 1px var(--blue-bright); }
 .program-bars { position: relative; padding-left: 34px; }
 .program-bars .percent-axis { position: absolute; inset: 22px auto 33px 0; width: 28px; margin: 0; display: flex; flex-direction: column; justify-content: space-between; font-size: 9px; }
 .program-bars .program-chart-rows { display: flex; align-items: stretch; gap: 12px; height: 220px; max-height: 260px; overflow: auto; padding: 0 2px 6px; background: repeating-linear-gradient(to top,transparent 0 calc(25% - 1px),var(--surface-light) calc(25% - 1px) 25%); background-size: 100% 172px; background-position: 0 20px; background-repeat: no-repeat; }
@@ -61,7 +61,7 @@ input, select, textarea { border-radius: 10px; }
 thead { background: var(--surface-light); }th { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; font-weight: 500; }td { font-size: 12px; }.table-wrap { border-radius: 10px; }.program-name { gap: 5px; }.program-name .badge { font-size: 9px; }.pagination { font-size: 10px; margin-top: 18px; }.pagination .secondary { font-size: 10px; min-height: 32px; padding: 7px 10px; }
 .login-shell { min-height: 100dvh; display: grid; grid-template-columns: minmax(0,1.2fr) minmax(340px,.8fr); gap: 70px; align-items: center; padding: 60px max(6vw,24px); max-width: 1400px; margin: auto; }
 .login-intro { min-height: 560px; display: flex; flex-direction: column; justify-content: space-between; }.login-wordmark { display: flex; align-items: center; gap: 12px; }.login-wordmark b { letter-spacing: .05em; font-size: 16px; }.login-wordmark b span { color: var(--light-gray); font-weight: 400; }.login-intro h1 { font-size: clamp(40px,5.5vw,76px); line-height: 1.05; letter-spacing: -.065em; font-weight: 550; margin-top: 24px; }.login-intro > div > p:not(.eyebrow) { font-size: 14px; margin-top: 24px; }.login-capabilities { display: flex; gap: 20px; font-size: 11px; color: var(--light-gray); }.login-capabilities span { padding-top: 12px; border-top: 1px solid var(--gray); flex: 1; }
-.login-card { width: 100%; max-width: 440px; padding: 36px; background: var(--background); border-radius: 24px; }.login-brand h1 { font-size: 24px; font-weight: 650; }.login-brand p { font-size: 12px; }.login-card h2 { font-size: 20px; font-weight: 500; }.login-card .primary { background: var(--white); color: var(--black); border: 0; border-radius: 10px; }.login-card .primary:hover:not(:disabled) { background: var(--light-gray); }
+.login-card { width: 100%; max-width: 440px; padding: 36px; background: var(--background); border-radius: 24px; }.login-brand h1 { font-size: 24px; font-weight: 650; }.login-brand p { font-size: 12px; }.login-card h2 { font-size: 20px; font-weight: 500; }.login-card .primary { background: var(--blue); color: var(--white); border: 0; border-radius: 10px; }.login-card .primary:hover:not(:disabled) { background: var(--blue-strong); }
 @media (min-width: 1700px) { .page { padding-top: 20px; } }
 @media (max-width: 1100px) and (min-width: 801px) {
  .dashboard-overview { grid-template-columns: minmax(240px,.9fr) minmax(0,1.2fr); }
@@ -82,3 +82,25 @@ thead { background: var(--surface-light); }th { font-size: 10px; text-transform:
  .dashboard-details { gap: 12px; margin-top: 12px; }.dashboard-details .card { padding: 17px; }.status-donut-layout { gap: 20px; }.status-donut { width: 145px; height: 145px; }.donut-legend { min-width: 110px; }
  .login-intro h1 { font-size: 32px; }.login-intro { gap: 22px; }.login-shell { gap: 24px; }.login-card { padding: 26px 22px; border-radius: 18px; }
 }
+
+/* Blue/red brand accents; neutrals retain readable text and unknown states. */
+a:hover { color: var(--blue-light); }
+:focus-visible { outline-color: var(--blue-bright); }
+.primary { background: var(--blue); border-color: var(--blue-bright); color: var(--white); }
+.primary:hover:not(:disabled) { background: var(--blue-strong); }
+.danger { border-color: var(--red-bright); }.danger:hover:not(:disabled) { background: var(--red-strong); }
+.badge { background: var(--navy); color: var(--blue-light); }
+.badge.red, .badge.orange { background: var(--red-tint); color: var(--red-bright); border-color: var(--red-bright); }
+.badge.green { color: var(--blue-light); background: var(--navy); }
+.workspace-label span, .login-brand h1 span { color: var(--blue-bright); }
+.avatar { background: var(--red-strong); }
+.progress span { background: var(--blue-bright); }
+.error { color: var(--white); border-color: var(--red-bright); background: var(--red-tint); }
+input::placeholder, textarea::placeholder { color: var(--light-gray); opacity: 1; }
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 2px; }
+.login-capabilities span:first-child { border-color: var(--blue-bright); }.login-capabilities span:last-child { border-color: var(--red-bright); }
+.program-bars .percent-axis, .program-column .chart-label, .program-column b, .program-bars figcaption, .chart-coverage, .kpi-chart-legend { font-size: 11px; }
+.program-column .chart-label { height: 18px; }
+
+.login-intro h1 span { color: var(--red-bright); }
+.kpi:nth-child(4) .kpi-open { background: var(--red-strong); }
