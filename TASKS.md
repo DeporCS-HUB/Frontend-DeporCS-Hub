@@ -27,6 +27,8 @@ Revisi visual berikutnya divalidasi dengan 25 browser flow mock, termasuk geomet
 
 - [x] UX-04: palet biru/merah Depor dengan kontras lebih tinggi; label, kontrol dan chart memakai token konsisten; tes kontras browser dan screenshot 375/768/1440 px.
 
+- [x] UX-05: pisahkan warna brand dan status; mapping konsisten chart/daftar Program, legend/deskripsi status, tugas selesai vs update, dan uji kontras.
+
 ## Pekerjaan berikutnya
 
 | ID | Prioritas | Pekerjaan | Kriteria selesai |

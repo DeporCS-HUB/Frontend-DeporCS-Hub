@@ -18,7 +18,7 @@ Untuk aplikasi ini, hero adalah blok pembuka workspace: judul dan sapaan singkat
 | Toolbar dan tabel rapat | Filter dekat data; kolom hanya informasi utama; deskripsi lewat Detail |
 | Avatar, notifikasi, pencarian global | Tidak dianggap fitur tersedia jika belum diimplementasikan |
 
-Instruksi terbaru pengguna pada 19 Oktober 2026 mengganti palet muted sebelumnya dengan identitas biru–merah Depor Fasilkom. Hanya biru dan merah dipakai sebagai aksen berwarna; navy, putih dan netral dipakai untuk struktur, teks, serta data belum diketahui. Oranye/hijau pada gambar referensi tidak diadopsi.
+Instruksi terbaru pengguna pada 19 Oktober 2026 mengganti palet muted sebelumnya dengan identitas biru–merah Depor Fasilkom. Biru dan merah dipakai untuk identitas, navigasi dan aksi utama. Instruksi lanjutan membedakan warna status agar selesai/belum selesai lebih mudah dibaca; hijau dan kuning dipakai hanya untuk makna data, bukan dekorasi brand.
 
 ## Token warna utama
 
@@ -38,6 +38,11 @@ Instruksi terbaru pengguna pada 19 Oktober 2026 mengganti palet muted sebelumnya
   --red-bright: #FF5A5A;
   --red-chart: #EF4444;
   --red-tint: #441C2B;
+  --status-done: #4ADE80;
+  --status-running: #60A5FA;
+  --status-planned: #FACC15;
+  --status-unknown: #94A3B8;
+  --status-cancelled: #F87171;
   --border: #36577D;
   --gray: #8194B2;
   --light-gray: #CBD5E1;
@@ -49,7 +54,7 @@ Background: navy `--background`. Panel: `--surface`, dengan outline `--border` a
 
 ## Tata letak
 
-**Dashboard desktop:** workspace inset dengan sudut 22 px dan sidebar ikon. Header dan sapaan di atas; empat KPI dalam grid 2×2 di kiri, chart batang vertikal Proker/UKOR yang dominan di kanan. Baris kedua menempatkan panel performa Staff di kiri dan donut status di kanan. KPI pertama biru kuat dengan teks putih; aksen merah hadir pada brand, tombol tenggat dan kegiatan berjalan. Tinggi chart progres 220 px dengan scroll horizontal berfokus keyboard untuk banyak kegiatan; chart Staff maksimum 214 px. Jangan menambahkan tabel atau paragraf panjang pada dashboard.
+**Dashboard desktop:** workspace inset dengan sudut 22 px dan sidebar ikon. Header dan sapaan di atas; empat KPI dalam grid 2×2 di kiri, chart batang vertikal Proker/UKOR yang dominan di kanan. Baris kedua menempatkan panel performa Staff di kiri dan donut status di kanan. KPI pertama biru kuat dengan teks putih; aksen merah hadir pada brand dan tombol tenggat. Chart kegiatan mengikuti warna status semantik. Tinggi chart progres 220 px dengan scroll horizontal berfokus keyboard untuk banyak kegiatan; chart Staff maksimum 214 px. Jangan menambahkan tabel atau paragraf panjang pada dashboard.
 
 **Dashboard tablet:** pada 768 px KPI dan chart utama tetap berdampingan, sedangkan panel Staff dan donut ditumpuk. Navigasi menjadi menu drawer.
 
@@ -96,8 +101,10 @@ Implementasi komposisi berada di `src/workspace.css`, dimuat sesudah baseline `s
 
 ## Kontras dan warna chart — revisi biru/merah
 
-- Selesai: biru terang; berjalan: merah terang; rencana: biru muda; batal: merah; belum diisi: netral berarsir. Label dan angka tetap ditampilkan, bukan warna saja.
-- Angka di dalam segmen chart terang memakai teks navy gelap. Tooltip, axis dan legend chart keuangan memakai token yang sama dengan dashboard, tanpa hex palet lama.
+- Selesai: hijau; berjalan/aktif: biru; rencana: kuning; batal: merah; belum diisi: abu berarsir. Label dan angka tetap ditampilkan, bukan warna saja.
+- Bar progres, distribusi donut, metrik Staff dan status pada daftar Program memakai mapping yang sama. Chart progres menampilkan legend; status tiap kegiatan tersedia melalui title/deskripsi aksesibel.
+- Metrik tugas selesai memakai hijau. Jumlah update memakai biru karena update tidak berarti suatu kegiatan telah selesai.
+- Angka di dalam segmen chart terang memakai teks navy gelap. Tooltip dan axis chart keuangan memakai token teks/panel yang sama; income/expense tetap biru/merah karena itu kategori transaksi, bukan status selesai.
 - Label chart dinaikkan ke 11 px. Fokus keyboard biru terang dan batas input tetap terlihat.
 - Tes browser menghitung warna hasil render: pasangan teks/tombol/placeholder yang diuji minimal 4,5:1; warna donut terhadap panel minimal 3:1. Ini pemeriksaan pasangan terpilih, bukan sertifikasi aksesibilitas seluruh aplikasi.
 - Rujukan: [WCAG contrast minimum](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html) dan [non-text contrast](https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html).

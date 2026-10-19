@@ -1,5 +1,10 @@
 # Depor CS HUB — development checkpoint
 
+## Warna status terpisah dari brand — 19 Oktober 2026
+
+Pengguna meminta warna KPI/chart lebih mudah dibaca untuk selesai vs belum selesai. Brand biru/merah tetap dipakai pada chrome dan tombol; warna data: selesai hijau #4ADE80, berjalan biru #60A5FA, rencana kuning #FACC15, belum diisi abu #94A3B8 dengan arsiran, batal merah #F87171. Mapping programStatusGroup dibagi oleh chart dan daftar Program. Program bar memiliki legend dan deskripsi status; null tetap tidak diisi. Metrik tugas selesai hijau, update aktivitas biru. Backend/data/Auth tetap sama; verifikasi lint/build, 23 unit dan 26 browser mock termasuk kontras/mapping, serta screenshot 375/768/1440 px.
+
+
 ## Palet biru/merah — 19 Oktober 2026
 
 Permintaan terbaru mengganti palet muted dengan biru/merah Depor Fasilkom dan kontras lebih tinggi. Token aktif di styles.css: blue #2563EB, blue-strong #1D4ED8, red #DC2626, chart blue #60A5FA/red #FF5A5A; background navy #0B1426, surface #172B49. Ini menggantikan ketentuan palet lama pada checkpoint historis. Charts.jsx memakai CSS variables agar chart keuangan konsisten. Layout PR #10 dipertahankan. Pasangan kontras render diuji melalui browser, 23 unit + 26 browser mock, lint/build; tidak mengklaim audit aksesibilitas menyeluruh atau login hosted.

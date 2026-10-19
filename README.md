@@ -31,7 +31,7 @@ Data operasional berasal dari backend/Supabase. Hardcoded hanya sesuai untuk kon
 
 ## Fitur baseline
 
-Login dan sesi; KPI/chart dashboard; Proker/UKOR multiple PJ; update progres oleh PJ/BPH; kanban tugas; catatan keuangan; inventaris; events; direktori tim; edit nama profile sendiri. Layout mengikuti komposisi referensi: KPI 2×2 dan chart utama berdampingan, Staff/donut pada baris berikutnya, sidebar ikon dan panel membulat. Identitas biru/merah memakai latar navy, KPI/navigasi biru, aksen merah dan teks berkontras tinggi. Deskripsi panjang dibaca melalui Detail. Pencarian/filter berjalan di server untuk seluruh hasil; list dipaginasi 10 program, 12 aset, atau 20 record lainnya per halaman.
+Login dan sesi; KPI/chart dashboard; Proker/UKOR multiple PJ; update progres oleh PJ/BPH; kanban tugas; catatan keuangan; inventaris; events; direktori tim; edit nama profile sendiri. Layout mengikuti komposisi referensi: KPI 2×2 dan chart utama berdampingan, Staff/donut pada baris berikutnya, sidebar ikon dan panel membulat. Identitas biru/merah memakai latar navy, KPI/navigasi biru, aksen merah dan teks berkontras tinggi. Chart/status menggunakan hijau untuk selesai, biru untuk berjalan, kuning untuk rencana, abu berarsir untuk belum diisi, dan merah untuk batal. Deskripsi panjang dibaca melalui Detail. Pencarian/filter berjalan di server untuk seluruh hasil; list dipaginasi 10 program, 12 aset, atau 20 record lainnya per halaman.
 
 Belum tersedia: upload LPJ/lampiran, undangan akun, role administration UI, absensi, notifikasi, atau pengiriman izin venue. Lihat [PRD.md](PRD.md) untuk batas implementasi.
 

@@ -2,6 +2,12 @@
 
 Tanggal memakai YYYY-MM-DD. Entri berasal dari riwayat repository dan checkpoint percakapan yang tersedia. Tidak ada nomor versi aplikasi semantik yang direka.
 
+## 2026-10-19 — Warna status yang mudah dibedakan
+
+- Status memakai hijau (selesai), biru (berjalan), kuning (rencana), abu berarsir (belum diisi), dan merah (batal), terpisah dari identitas biru/merah.
+- Mapping konsisten pada bar Proker/UKOR, donut, Staff dan status/progres daftar Program. Legend dan deskripsi status memperjelas makna; metrik update memakai biru, bukan warna selesai.
+- Data, rumus KPI, layout, API dan backend tidak diubah. Verifikasi: lint/build, 23 unit test, 26 browser mock termasuk mapping status dan kontras.
+
 ## 2026-10-19 — Identitas biru/merah dengan kontras lebih tinggi
 
 - Palet navy, biru terang dan merah menggantikan warna muted sebelumnya pada navigasi, KPI, tombol, login dan chart.
