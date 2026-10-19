@@ -6,6 +6,7 @@ async function mockApi(page, role = 'staff') {
  let profile = { ...user, role, departmentRole: role === 'member' ? 'staff' : 'bph' };
  let failEvent = false; let failProfile = false;
  const rows = { events: [], programs: [], finances: [], inventory: [], tasks: [{ id: 'task-id', title: 'Review proposal', description: '', status: 'To Do', priority: 'Medium', program_id: null, assignee_id: user.id, due_date: null, created_by: user.id }] };
+ const notes = []; const milestones = []; const timeline = [];
  let failTask = false; let failProgress = false; let progressUpdates = 0;
  await page.route('**/api/**', async route => {
   const req = route.request(); const url = new URL(req.url()); const path = url.pathname.replace('/api/', '');
@@ -16,15 +17,44 @@ async function mockApi(page, role = 'staff') {
   if (path === 'auth/logout') { signedIn = false; return reply({ loggedOut: true }); }
   if (path === 'dashboard') return reply({ overview: {proker: rows.programs.filter(p=>p.kind==='Proker').length, ukor: rows.programs.filter(p=>p.kind==='UKOR').length, openTasks: rows.tasks.filter(t=>t.status!=='Done').length, overdueTasks:0}, programFocus: rows.programs.slice(0,30), programStatusCounts: Object.values(rows.programs.reduce((acc,p)=>{const key=p.kind+p.status;acc[key] ||= {kind:p.kind,status:p.status,count:0};acc[key].count++;return acc;},{})), upcomingMilestones: rows.programs.filter(p=>p.milestone_date), attentionTasks: rows.tasks.filter(t=>t.status!=='Done'), staffPerformance: role==='member' ? [{id:profile.id,name:profile.name,programs:rows.programs.filter(p=>p.assignee_ids?.includes(profile.id)),assignedTasks:rows.tasks.filter(t=>t.assignee_id===profile.id).length,completedTasks:rows.tasks.filter(t=>t.assignee_id===profile.id&&t.status==='Done').length,reviewTasks:0,overdueTasks:0,updatesLast30Days:progressUpdates,lastUpdate:null}] : [], summary: {...summary,recordedPrograms:rows.programs.filter(p=>p.progress!=null).length,totalPrograms:rows.programs.length,completedPrograms:rows.programs.filter(p=>p.status==='Completed').length,completedTasks:rows.tasks.filter(t=>t.status==='Done').length,pendingTasks:rows.tasks.filter(t=>t.status!=='Done').length}, monthly: [{ month: 10, income: 0, expense: 0 }], inventory: [{ status: 'Available', quantity: 3 }], upcomingPrograms: [] });
 
+  function filteredTasks() {
+   let records=rows.tasks;
+   const q=url.searchParams.get('q')?.toLowerCase();if(q) records=records.filter(t=>(t.title+' '+(t.description||'')).toLowerCase().includes(q));
+   for(const key of ['program_id','assignee_id','priority','status']){const value=url.searchParams.get(key);if(value)records=records.filter(t=>t[key]===value);}
+   const scope=url.searchParams.get('scope');
+   if(scope==='mine')records=records.filter(t=>t.assignee_id===profile.id);
+   if(scope==='unassigned')records=records.filter(t=>!t.assignee_id);
+   if(scope==='overdue')records=records.filter(t=>t.status!=='Done'&&t.due_date&&t.due_date<'2026-10-19');
+   return records;
+  }
+  if(path==='tasks/summary') {
+   const tasks=filteredTasks();const statuses={};const workload={};
+   for(const t of tasks){statuses[t.status]=(statuses[t.status]||0)+1;const id=t.assignee_id||'unassigned';workload[id] ||= {assignee_id:t.assignee_id||null,total:0,done:0,open:0,overdue:0};const w=workload[id];w.total++;t.status==='Done'?w.done++:w.open++;if(t.status!=='Done'&&t.due_date&&t.due_date<'2026-10-19')w.overdue++;}
+   return reply({total:tasks.length,done:tasks.filter(t=>t.status==='Done').length,overdue:tasks.filter(t=>t.status!=='Done'&&t.due_date&&t.due_date<'2026-10-19').length,unassigned:tasks.filter(t=>!t.assignee_id).length,statuses,workload:role==='member'?[]:Object.values(workload)});
+  }
+  if(/^programs\/[^/]+/.test(path)) {
+   const [,programId,child,childId]=path.split('/'); const program=rows.programs.find(p=>p.id===programId);
+   if(!program || (role==='member'&&!program.assignee_ids?.includes(profile.id)))return reply('Program tidak ditemukan atau akses tidak tersedia.',404);
+   if(!child&&req.method()==='GET')return reply(program);
+   if(child==='timeline') {const all=timeline.filter(t=>t.program_id===programId);const index=Number(url.searchParams.get('page')||0)*20;return reply({items:all.slice(index,index+20),hasMore:all.length>index+20});}
+   if(child==='notes'&&req.method()==='POST') {const note={id:'note-'+notes.length,program_id:programId,actor_id:profile.id,kind:'note',body:req.postDataJSON().body,created_at:new Date().toISOString()};notes.push(note);timeline.unshift(note);return reply(note,201);}
+   if(child==='milestones') {
+    if(req.method()==='GET'){const all=milestones.filter(m=>m.program_id===programId&&(!url.searchParams.get('status')||m.status===url.searchParams.get('status')));return reply(all,200,{hasMore:false});}
+    if(req.method()==='POST'){const m={...req.postDataJSON(),id:'m-'+milestones.length,program_id:programId};milestones.push(m);return reply(m,201);}
+    const m=milestones.find(m=>m.id===childId&&m.program_id===programId);if(!m)return reply('Not found',404);
+    if(req.method()==='PUT'){Object.assign(m,req.postDataJSON());return reply(m);}
+    if(req.method()==='DELETE'){milestones.splice(milestones.indexOf(m),1);return reply({deleted:true});}
+   }
+  }
   if (path === 'profiles/me') {
    if (failProfile) return reply('Profile unavailable', 503);
    profile = { ...profile, name: req.postDataJSON().name }; return reply(profile);
   }
   if (path.startsWith('events') && req.method() !== 'GET' && failEvent) return reply('Event unavailable',503);
-  if (path.endsWith('/progress') && req.method()==='PUT') { if(failProgress) return reply('Progress unavailable',503); const id=path.split('/')[1]; const row=rows.programs.find(p=>p.id===id); if(role==='member'&&!row?.assignee_ids?.includes(profile.id)) return reply('Forbidden',403); Object.assign(row,req.postDataJSON());progressUpdates++;return reply(row); }
+  if (path.endsWith('/progress') && req.method()==='PUT') { if(failProgress) return reply('Progress unavailable',503); const id=path.split('/')[1]; const row=rows.programs.find(p=>p.id===id); if(role==='member'&&!row?.assignee_ids?.includes(profile.id)) return reply('Forbidden',403); Object.assign(row,req.postDataJSON());progressUpdates++;timeline.unshift({id:'update-'+progressUpdates,program_id:id,actor_id:profile.id,kind:'progress',status:row.status,progress:row.progress,body:row.progress_notes,created_at:new Date().toISOString()});return reply(row); }
   const [resource, id] = path.split('/');
   if (req.method() === 'GET') {
-   let records = resource === 'profiles' ? [profile,...extraProfiles] : rows[resource] || [];
+   let records = resource === 'profiles' ? [profile,...extraProfiles] : resource === 'tasks' ? filteredTasks() : rows[resource] || [];
    const q = url.searchParams.get('q')?.toLowerCase();
    if(q) records = records.filter(row => Object.values(row).some(v => typeof v === 'string' && v.toLowerCase().includes(q)));
    for(const key of ['status','kind','priority','permit_status','type','departmentRole']) { const value=url.searchParams.get(key); if(value) records=records.filter(row=>row[key]===value); }
@@ -37,7 +67,7 @@ async function mockApi(page, role = 'staff') {
   if (req.method() === 'DELETE') { rows[resource] = rows[resource].filter(row => row.id !== id);return reply({ deleted: true }); }
   return reply('Not found',404);
  });
- return { failEvent() { failEvent = true; }, failProfile() { failProfile = true; }, failTask() { failTask = true; }, failProgress() { failProgress=true; }, profiles:extraProfiles, rows, counts };
+ return { failEvent() { failEvent = true; }, failProfile() { failProfile = true; }, failTask() { failTask = true; }, failProgress() { failProgress=true; }, profiles:extraProfiles, rows, counts, notes, milestones, timeline };
 }
 async function login(page) {
  await page.goto('/'); await expect(page).toHaveURL(/login/);
@@ -51,7 +81,7 @@ test('protected login, program CRUD, persistence after reload, and logout', asyn
  await page.getByRole('link', { name: 'Program', exact: true }).click();
  await page.getByRole('button', { name: 'Tambah program' }).click();
  await page.getByLabel('Nama', { exact: true }).fill('Development Tournament');
- await page.getByLabel('PIC', { exact: true }).fill('Development Staff');
+ await page.getByLabel('Akun PJ', { exact: true }).selectOption(user.id);
  await page.getByRole('button', { name: 'Simpan', exact: true }).click();
  await expect(page.getByRole('cell', { name: 'Development Tournament' })).toBeVisible();
  await page.getByRole('button', { name: 'Edit', exact: true }).click();
@@ -246,7 +276,7 @@ test('mobile menu and create form remain usable at 375px without page overflow',
  const rect = await dialog.boundingBox(); expect(rect.x).toBeGreaterThanOrEqual(0); expect(rect.x + rect.width).toBeLessThanOrEqual(375);
  await page.screenshot({ path: testInfo.outputPath('editor-mobile.png'), fullPage: true });
  await page.getByLabel('Nama', { exact: true }).fill('Mobile program');
- await page.getByLabel('PIC', { exact: true }).fill('Development Staff');
+ await page.getByLabel('Akun PJ', { exact: true }).selectOption(user.id);
  await page.getByRole('button', { name: 'Simpan', exact: true }).click();
  await expect(page.getByRole('cell', { name: 'Mobile program' })).toBeVisible();
  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
@@ -273,7 +303,7 @@ test('assigned Staff edits UKOR progress, sees updated dashboard and retains it 
  await dialog.getByLabel('Catatan progres',{exact:true}).fill('Two practice sessions recorded');
  await dialog.getByRole('button',{name:'Simpan',exact:true}).click();
  await expect(row.getByText('35%')).toBeVisible();
- await page.reload();await row.getByRole('button',{name:'Detail',exact:true}).click();await expect(page.getByText('Two practice sessions recorded')).toBeVisible();await page.keyboard.press('Escape');
+ await page.reload();await row.getByRole('link',{name:'Buka program',exact:true}).click();await expect(page.getByText('Two practice sessions recorded')).toBeVisible();await page.getByRole('link',{name:'Semua program',exact:true}).click();
  mock.failProgress();await row.getByRole('button',{name:'Update progres'}).click();
  await page.getByLabel('Progress (%)',{exact:true}).fill('70');await page.getByRole('button',{name:'Simpan',exact:true}).click();
  await expect(page.getByRole('alert')).toHaveText('Progress unavailable');await page.getByRole('button',{name:'Batal',exact:true}).click();
@@ -287,7 +317,7 @@ test('assigned Staff edits UKOR progress, sees updated dashboard and retains it 
 test('BPH selects multiple PJ and leaves unspecified dates and percentages empty',async ({page})=>{
  const mock=await mockApi(page);mock.profiles.push({id:'second-pj',name:'Other Staff',role:'member',departmentRole:'staff'});await login(page);await page.getByRole('link',{name:'Program',exact:true}).click();
  await page.getByRole('button',{name:'Tambah program'}).click();
- await page.getByLabel('Nama',{exact:true}).fill('Multi PJ activity');await page.getByLabel('PIC',{exact:true}).fill('Development Staff');
+ await page.getByLabel('Nama',{exact:true}).fill('Multi PJ activity');await page.getByLabel('Akun PJ',{exact:true}).selectOption(user.id);
  await page.getByLabel('Jenis kegiatan',{exact:true}).selectOption('UKOR');await page.getByLabel('Akun PJ').selectOption([user.id,'second-pj']);
  await expect(page.getByLabel('Mulai',{exact:true})).toHaveValue('');await expect(page.getByLabel('Progress (%)',{exact:true})).toHaveValue('');
  await page.getByLabel('Agenda berikutnya').fill('Main event');await page.getByLabel('Tanggal agenda').fill('2026-10-31');
@@ -327,7 +357,8 @@ test('long program and task descriptions stay inside a bounded mobile detail dia
  mock.rows.tasks[0].description=description;
  await login(page);await page.getByRole('button',{name:'Buka navigasi'}).click();await page.getByRole('link',{name:'Program',exact:true}).click();
  await expect(page.getByText(description,{exact:true})).toHaveCount(0);await expect(page.getByText(notes,{exact:true})).toHaveCount(0);
- const detail=page.getByRole('button',{name:'Detail',exact:true});await detail.click();
+ await page.getByRole('link',{name:'Buka program',exact:true}).click();
+ const detail=page.getByRole('button',{name:'Detail program',exact:true});await detail.click();
  const dialog=page.getByRole('dialog');await expect(dialog.getByText(description,{exact:true})).toBeVisible();
  const rect=await dialog.boundingBox();expect(rect.height).toBeLessThanOrEqual(812*.85);expect(rect.x+rect.width).toBeLessThanOrEqual(375);
  expect(await dialog.locator('.detail-body').evaluate(el=>el.scrollHeight>el.clientHeight)).toBe(true);
@@ -394,6 +425,7 @@ test('brand and semantic status colors keep rendered text, controls and charts r
  const mock=await mockApi(page,'member');
  for(const [n,status]of ['Completed','Ongoing','Planning','Unspecified','Cancelled'].entries())mock.rows.programs.push({id:`color-${n}`,name:`Color activity ${n}`,kind:'Proker',status,progress:n===3?null:n===0?100:25,assignee_ids:[user.id]});
  await login(page);
+ await expect(page.getByLabel('Color activity 0: 100%',{exact:true})).toBeVisible();
  const pairs=await page.evaluate(()=>{
   const css=selector=>getComputedStyle(document.querySelector(selector));
   const text=selector=>({name:selector,fg:css(selector).color,bg:css(selector).backgroundColor});
@@ -413,4 +445,50 @@ test('brand and semantic status colors keep rendered text, controls and charts r
  await page.getByRole('button',{name:'Logout',exact:true}).click();await expect(page.getByRole('heading',{name:'Masuk ke akun'})).toBeVisible();
  const loginColors=await page.evaluate(()=>{const btn=getComputedStyle(document.querySelector('.login-card .primary'));const input=document.querySelector('.login-card input');return {button:[btn.color,btn.backgroundColor],placeholder:[getComputedStyle(input,'::placeholder').color,getComputedStyle(input).backgroundColor]};});
  expect(contrast(...loginColors.button)).toBeGreaterThanOrEqual(4.5);expect(contrast(...loginColors.placeholder)).toBeGreaterThanOrEqual(4.5);
+});
+
+test('PJ program workspace persists notes, agenda and scoped tasks; direct other-program link is denied',async({page},testInfo)=>{
+ await page.setViewportSize({width:1440,height:1000});const mock=await mockApi(page,'member');
+ mock.rows.programs.push({id:'pj-workspace',name:'Sports development program',kind:'UKOR',status:'Ongoing',progress:30,description:'Training and preparation. '.repeat(60),progress_notes:'Selection in progress',assignee_ids:[user.id],pic:'Development Staff',next_milestone:'Selection',milestone_date:'2026-10-31'});
+ mock.rows.programs.push({id:'closed',name:'Closed program',kind:'Proker',status:'Planning',assignee_ids:['other']});
+ await login(page);await page.goto('/programs/pj-workspace');await expect(page.getByRole('heading',{name:'Sports development program',exact:true})).toBeVisible();
+ await expect(page.getByRole('button',{name:'Kelola program & PJ'})).toHaveCount(0);
+ await page.screenshot({path:testInfo.outputPath('program-desktop.png'),fullPage:true});
+ await page.getByRole('button',{name:'Timeline',exact:true}).click();await page.getByLabel('Pembaruan program').fill('Venue confirmed; prepare the selection form.');await page.getByRole('button',{name:'Kirim pembaruan'}).click();
+ await expect(page.locator('.activity-list')).toContainText('Venue confirmed');expect(mock.notes).toHaveLength(1);
+ await page.getByRole('button',{name:'Agenda',exact:true}).click();await page.getByRole('button',{name:'Tambah agenda'}).click();await page.getByLabel('Judul agenda').fill('Internal selection');await page.getByLabel('Tanggal agenda').fill('2026-10-25');await page.getByRole('button',{name:'Simpan',exact:true}).click();
+ await page.getByRole('button',{name:'Selesaikan Internal selection'}).click();await expect(page.getByRole('button',{name:'Buka kembali Internal selection'})).toHaveAttribute('aria-pressed','true');
+ await page.getByRole('button',{name:'Tugas',exact:true}).click();await expect(page.getByRole('heading',{name:'Review proposal'})).toHaveCount(0);await page.getByRole('button',{name:'Tugas baru'}).click();
+ await expect(page.getByRole('dialog').getByLabel('Program',{exact:true})).toHaveCount(0);await page.getByLabel('Judul').fill('Prepare selection form');await page.getByRole('button',{name:'Simpan',exact:true}).click();await expect(page.getByRole('heading',{name:'Prepare selection form'})).toBeVisible();
+ expect(mock.rows.tasks.find(t=>t.title==='Prepare selection form').program_id).toBe('pj-workspace');
+ await page.getByLabel('Status Prepare selection form').selectOption('Done');await expect(page.getByLabel('Status Prepare selection form')).toHaveValue('Done');await page.reload();await page.getByRole('button',{name:'Agenda',exact:true}).click();await expect(page.getByRole('button',{name:'Buka kembali Internal selection'})).toHaveAttribute('aria-pressed','true');
+ await page.goto('/programs/closed');await expect(page.getByRole('alert')).toContainText('akses tidak tersedia');await expect(page.getByRole('button',{name:'Update progres'})).toHaveCount(0);await expect(page.getByRole('heading',{name:'Closed program'})).toHaveCount(0);
+});
+for(const width of [375,1440])test(`BPH task board tracks full totals, per-column pages, account filters and drag/drop at ${width}px`,async({page},testInfo)=>{
+ await page.setViewportSize({width,height:1000});const mock=await mockApi(page);mock.rows.tasks=[];mock.profiles.push({id:'second-staff',name:'Second Staff',role:'member',departmentRole:'staff'});
+ for(let n=0;n<125;n++)mock.rows.tasks.push({id:'track-'+n,title:n===124?'Find beyond page 100':'Task '+n,description:'Work item',status:'To Do',priority:n%2?'High':'Low',assignee_id:n%2?'second-staff':user.id,created_by:user.id,program_id:null,due_date:n===124?'2020-01-01':null});
+ await login(page);await page.goto('/tasks');await expect(page.getByRole('button',{name:'Total tugas 125'})).toBeVisible();await expect(page.locator('.work-task')).toHaveCount(12);
+ await expect(page.getByRole('region',{name:'Perlu dikerjakan',exact:true}).locator('.column-count')).toHaveText('125');
+ await page.getByRole('button',{name:'Berikutnya Perlu dikerjakan'}).click();await expect(page.getByRole('heading',{name:'Task 12',exact:true})).toBeVisible();
+ await page.getByLabel('Cari tugas').fill('Find beyond page 100');await expect(page.getByRole('heading',{name:'Find beyond page 100'})).toBeVisible();await expect(page.getByRole('button',{name:'Total tugas 1',exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Reset filter'}).click();await expect(page.getByRole('heading',{name:'Task 0',exact:true})).toBeVisible();
+ await page.getByText('Beban tugas per akun',{exact:false}).first().click();await expect(page.locator('.workload-grid')).toContainText('Second Staff');await page.getByLabel('Filter akun PJ').selectOption('second-staff');await expect(page.getByRole('button',{name:'Total tugas 62'})).toBeVisible();
+ await page.getByRole('button',{name:'Daftar',exact:true}).click();await expect(page.locator('.task-list-view tbody tr')).toHaveCount(20);await expect(page.locator('.task-list-view tbody')).not.toContainText('Development Staff');
+ await page.getByRole('button',{name:'Reset filter'}).click();await page.getByRole('button',{name:'Papan',exact:true}).click();await expect(page.getByRole('heading',{name:'Task 0',exact:true})).toBeVisible();
+ if(width===1440){await page.locator('.work-task').filter({has:page.getByRole('heading',{name:'Task 0',exact:true})}).locator('.task-drag-handle').dragTo(page.getByRole('region',{name:'Dikerjakan',exact:true}));await expect(page.getByLabel('Status Task 0',{exact:true})).toHaveValue('In Progress');}
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:testInfo.outputPath(`tasks-${width}.png`),fullPage:true});
+});
+test('mobile program workspace and agenda retain bounded content without overflow',async({page},testInfo)=>{
+ await page.setViewportSize({width:375,height:812});const mock=await mockApi(page);mock.rows.programs.push({id:'mobile-unit',name:'A very long sports program name for the department',kind:'UKOR',status:'Ongoing',progress:null,description:'Long description '.repeat(100),assignee_ids:[user.id],pic:'Development Staff'});
+ await login(page);await page.goto('/programs/mobile-unit');await expect(page.getByRole('heading',{level:1})).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:testInfo.outputPath('program-mobile.png'),fullPage:true});
+ await page.getByRole('button',{name:'Agenda',exact:true}).click();await page.getByRole('button',{name:'Tambah agenda'}).click();await page.getByLabel('Judul agenda').fill('Pending date');await page.getByRole('button',{name:'Simpan',exact:true}).click();await expect(page.locator('.milestone-list')).toContainText('Pending date');expect(mock.milestones[0].due_date).toBe(null);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
+
+test('manual refresh loads external task changes and removes a revoked program workspace',async({page})=>{
+ const mock=await mockApi(page,'member');mock.rows.programs.push({id:'revoked-unit',name:'Revocable unit',kind:'UKOR',status:'Active',progress:null,assignee_ids:[user.id],pic:'Development Staff'});
+ await login(page);await page.goto('/tasks');await expect(page.getByLabel('Status Review proposal')).toHaveValue('To Do');mock.rows.tasks[0].status='Review';
+ await page.getByRole('button',{name:'Muat ulang tugas'}).click();await expect(page.getByLabel('Status Review proposal')).toHaveValue('Review');expect(mock.counts['PUT tasks/task-id/status']).toBeUndefined();
+ await page.goto('/programs/revoked-unit');await expect(page.getByRole('heading',{name:'Revocable unit',exact:true})).toBeVisible();mock.rows.programs[0].assignee_ids=[];
+ await page.getByRole('button',{name:'Muat ulang program'}).click();await expect(page.getByRole('alert')).toContainText('akses tidak tersedia');await expect(page.getByRole('button',{name:'Update progres'})).toHaveCount(0);
 });

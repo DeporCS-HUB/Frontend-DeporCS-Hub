@@ -17,17 +17,11 @@ Daftar ini memisahkan baseline yang terbukti pada kode dari pekerjaan berikutnya
 
 - [x] DATA-01: KPI global, distribusi status global, status Staff dari assignment lengkap; SQL rollback 35 program dan browser dataset >30.
 - [x] UX-02: pencarian/filter server pada enam resource, debounce, reset halaman, metadata hasMore; kasus target di luar 100 record diuji.
-- [x] UX-01: revisi komposisi referensi — KPI 2×2 kiri/chart vertikal kanan, Staff/donut baris kedua, sidebar ikon dan workspace membulat; inspeksi screenshot desktop/tablet/mobile.
+- [x] UX-01: KPI putih dominan dan donut status, palet Depor, chart/deskripsi ringkas.
 - [x] QA-02: browser mock 375/768/1440 px; overflow, fokus chart, navigasi, dialog dan form.
 - [x] UX-03: pagination list lebih pendek, chart panjang dengan scroll internal dan link daftar lengkap.
 
 Validasi: Java 62 tes; frontend lint/build dan 23 unit test; empat suite SQL disposable; browser mock 22 flow. Migrasi hosted dan baca RPC dengan simulated JWT berbeda dari login Auth nyata. QA-01 tetap tertunda: kredensial uji aman belum tersedia, tidak ada reset akun/data.
-
-Revisi visual berikutnya divalidasi dengan 25 browser flow mock, termasuk geometri komposisi dan screenshot login/dashboard 375/768/1440 px; tidak mengubah database/Auth.
-
-- [x] UX-04: palet biru/merah Depor dengan kontras lebih tinggi; label, kontrol dan chart memakai token konsisten; tes kontras browser dan screenshot 375/768/1440 px.
-
-- [x] UX-05: pisahkan warna brand dan status; mapping konsisten chart/daftar Program, legend/deskripsi status, tugas selesai vs update, dan uji kontras.
 
 ## Pekerjaan berikutnya
 
@@ -52,3 +46,15 @@ Prioritas P0 adalah langkah validasi, bukan klaim terjadi insiden. Pekerjaan bar
 ## Cara memperbarui daftar
 
 Pindahkan pekerjaan ke selesai hanya setelah ada bukti. Catat tanggal, commit/PR, pemeriksaan dan keterbatasannya. Status tidak diubah hanya karena tombol/komponen sudah dibuat atau mock test lulus.
+
+
+## Iterasi 19 Oktober 2026: workspace program
+
+- [x] Halaman program terpisah dan assignment akun aktif.
+- [x] RLS akses program/related rows BPH/PJ, pencabutan akses dan tugas mandiri privat.
+- [x] Catatan append-only, timeline paginated, agenda CRUD/complete/reopen.
+- [x] Papan/daftar, filter, drag/drop/status-only, status count global dan workload BPH, pagination per kolom serta refresh.
+- [x] SQL disposable lima suite dan Java 21 verify; browser desktop/mobile dengan API mock.
+- [ ] Hosted migration/read-only RLS dan release pipeline diverifikasi pada commit final.
+
+QA-01 login browser hosted dengan akun nyata tetap belum ditandai selesai oleh mock/simulated JWT. Tidak mereset password untuk menyelesaikan verifikasi.

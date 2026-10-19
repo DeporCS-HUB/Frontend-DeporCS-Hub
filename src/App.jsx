@@ -6,6 +6,7 @@ const Events = lazy(() => import('./pages/Events'));
 const Finance = lazy(() => import('./pages/Finance'));
 const Inventory = lazy(() => import('./pages/Inventory'));
 const Programs = lazy(() => import('./pages/Programs'));
+const ProgramDetail = lazy(() => import('./pages/ProgramDetail'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Tasks = lazy(() => import('./pages/Tasks'));
 const Team = lazy(() => import('./pages/Team'));
@@ -20,5 +21,5 @@ function Protected() {
 }
 export default function App() {
   useEffect(() => { bootstrapSession(); }, []);
-  return <Routes><Route path="/login" element={<Login />} /><Route element={<Protected />}><Route path="/" element={<Layout />}><Route index element={<Dashboard />} /><Route path="programs" element={<Programs />} /><Route path="tasks" element={<Tasks />} /><Route path="finance" element={<Finance />} /><Route path="inventory" element={<Inventory />} /><Route path="events" element={<Events />} /><Route path="team" element={<Team />} /><Route path="settings" element={<Settings />} /><Route path="*" element={<Navigate to="/" replace />} /></Route></Route></Routes>;
+  return <Routes><Route path="/login" element={<Login />} /><Route element={<Protected />}><Route path="/" element={<Layout />}><Route index element={<Dashboard />} /><Route path="programs" element={<Programs />} /><Route path="programs/:id" element={<ProgramDetail />} /><Route path="tasks" element={<Tasks />} /><Route path="finance" element={<Finance />} /><Route path="inventory" element={<Inventory />} /><Route path="events" element={<Events />} /><Route path="team" element={<Team />} /><Route path="settings" element={<Settings />} /><Route path="*" element={<Navigate to="/" replace />} /></Route></Route></Routes>;
 }

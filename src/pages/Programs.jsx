@@ -1,16 +1,16 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Plus, Search } from 'lucide-react';
 import { PageTitle, Card, Badge, Progress } from '../components/UI';
 import { CollectionFeedback, CollectionEditor, Pagination, RowActions } from '../components/CollectionTools';
 import Editor from '../components/Editor';
-import DetailsDialog from '../components/DetailsDialog';
 import { useCollection } from '../lib/collections';
 import { useAuth, date } from '../lib/hooks';
 import { canUpdateProgram, programStatuses, programStatusLabel, programStatusGroup } from '../lib/programs';
 export default function Programs() {
  const { user } = useAuth();
  const [query, setQuery] = useState(''); const [status, setStatus] = useState(''); const [kind, setKind] = useState('');
- const [progressItem, setProgressItem] = useState(null); const [detailItem, setDetailItem] = useState(null);
+ const [progressItem, setProgressItem] = useState(null);
  const c = useCollection('programs', { q: query, status, kind }, 10);
  const rows = c.rows;
  return <><PageTitle title="Program kerja" subtitle="Proker & UKOR" action={c.manages && <button className="primary" onClick={() => c.setEditor({})}><Plus />Tambah program</button>} />
@@ -21,8 +21,7 @@ export default function Programs() {
  <td data-label="Kegiatan"><div className="program-name"><b>{row.name}</b><Badge>{row.kind || 'Proker'}</Badge></div></td>
  <td data-label="PJ"><span className="compact-pic" title={row.pic}>{row.pic}</span></td><td data-label="Progres"><Badge tone={`status-${programStatusGroup(row.status)}`}>{programStatusLabel(row.status)}</Badge>{row.progress == null ? (row.status !== 'Unspecified' && <small>Belum diisi</small>) : <div className="progress-cell"><Progress value={row.progress} status={row.status} /><span>{row.progress}%</span></div>}</td>
  <td data-label="Agenda"><span className="compact-agenda" title={row.next_milestone || undefined}>{row.milestone_date ? date(row.milestone_date) : '—'}</span></td>
- <td data-label="Tindakan"><div className="program-actions"><button className="secondary" onClick={() => setDetailItem(row)}>Detail</button>{canUpdateProgram(user,row) && <button className="secondary" onClick={() => setProgressItem(row)}>Update progres</button>}<RowActions collection={c} item={row} /></div></td>
+ <td data-label="Tindakan"><div className="program-actions"><Link className="secondary program-link" to={`/programs/${row.id}`}>Buka program</Link>{canUpdateProgram(user,row) && <button className="secondary" onClick={() => setProgressItem(row)}>Update progres</button>}<RowActions collection={c} item={row} /></div></td>
  </tr>)}</tbody></table>{!rows.length && <p className="data-state">Tidak ada hasil untuk filter ini.</p>}</div>}<Pagination collection={c} /></Card>
- {detailItem && <DetailsDialog item={detailItem} program onClose={() => setDetailItem(null)} />}
  <CollectionEditor resource="programs" collection={c} />{progressItem && <Editor resource="programProgress" item={progressItem} onClose={() => setProgressItem(null)} onSaved={() => { setProgressItem(null); c.reload(); }} />}</>;
 }

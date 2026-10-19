@@ -9,6 +9,7 @@ export function useCollection(resource, filters = {}, size = 20) {
   const params = new URLSearchParams(Object.entries({ ...filters, q: query }).filter(([,value]) => value !== '' && value != null));
   const filterKey = params.toString();
   const [cursor, setCursor] = useState({ key: filterKey, page: 0 });
+  if (cursor.key !== filterKey) setCursor({ key: filterKey, page: 0 });
   const page = cursor.key === filterKey ? cursor.page : 0;
   const setPage = next => setCursor({ key: filterKey, page: typeof next === 'function' ? next(page) : next });
   params.set('size', String(size)); params.set('page', String(page));

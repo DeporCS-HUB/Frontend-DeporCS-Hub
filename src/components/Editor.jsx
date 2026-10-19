@@ -2,33 +2,38 @@ import { useEffect, useRef, useState } from 'react';
 import { api, listAll } from '../lib/api';
 import { useAuth } from '../lib/hooks';
 import { canManage } from '../lib/roles';
-const resourceLabels = { programs: 'program', tasks: 'tugas', finances: 'transaksi', inventory: 'barang', events: 'kegiatan', programProgress: 'progres' };
+const resourceLabels = { programs: 'program', tasks: 'tugas', finances: 'transaksi', inventory: 'barang', events: 'kegiatan', programProgress: 'progres', milestones: 'agenda' };
 const today = () => new Date().toISOString().slice(0, 10);
 const schemas = {
   events: [['name','Nama','text',true],['description','Deskripsi','textarea'],['program_id','Program','programs'],['venue','Venue','text',true],['start_date','Mulai','date',true],['end_date','Selesai','date',true],['status','Status',['Planning','Confirmed','Completed','Cancelled'],true],['permit_status','Status izin',['Not required','Pending','Approved','Rejected'],true]],
-  programs: [['name','Nama','text',true],['kind','Jenis kegiatan',['Proker','UKOR'],true],['description','Deskripsi','textarea'],['pic','PIC','text',true],['assignee_ids','Akun PJ','profiles_multiple'],['start_date','Mulai','date'],['end_date','Selesai','date'],['status','Status',['Planning','Ongoing','Active','Completed','Cancelled','Unspecified'],true],['progress','Progress (%)','number'],['progress_notes','Catatan progres','textarea'],['next_milestone','Agenda berikutnya','text'],['milestone_date','Tanggal agenda','date'],['budget','Budget (Rp)','number']],
+  programs: [['name','Nama','text',true],['kind','Jenis kegiatan',['Proker','UKOR'],true],['description','Deskripsi','textarea'],['assignee_ids','Akun PJ','profiles_multiple',true],['start_date','Mulai','date'],['end_date','Selesai','date'],['status','Status',['Planning','Ongoing','Active','Completed','Cancelled','Unspecified'],true],['progress','Progress (%)','number'],['progress_notes','Catatan progres','textarea'],['next_milestone','Agenda berikutnya','text'],['milestone_date','Tanggal agenda','date'],['budget','Budget (Rp)','number']],
+  milestones: [['title','Judul agenda','text',true],['due_date','Tanggal agenda','date'],['status','Status agenda',['Planned','Done'],true]],
   programProgress: [['status','Status',['Planning','Ongoing','Active','Completed','Cancelled','Unspecified'],true],['progress','Progress (%)','number'],['progress_notes','Catatan progres','textarea']],
   tasks: [['title','Judul','text',true],['description','Deskripsi','textarea'],['program_id','Program','programs'],['assignee_id','Penanggung jawab','profiles'],['status','Status',['Backlog','To Do','In Progress','Review','Done'],true],['priority','Prioritas',['Low','Medium','High'],true],['due_date','Deadline','date']],
   finances: [['description','Deskripsi','text',true],['program_id','Program','programs'],['type','Jenis',['expense','income'],true],['amount','Nominal (Rp)','number',true],['category','Kategori','text',true],['transaction_date','Tanggal','date',true],['status','Status',['pending','approved','rejected'],true]],
   inventory: [['name','Nama','text',true],['category','Kategori','text',true],['quantity','Jumlah','number',true],['status','Status',['Available','Borrowed','Maintenance','Lost'],true],['condition','Kondisi',['Baik','Perawatan','Rusak'],true],['location','Lokasi','text']],
 };
 const defaults = { events: { start_date: today(), end_date: today(), status: 'Planning', permit_status: 'Pending' }, programs: { kind: 'Proker', status: 'Planning' }, programProgress: { status: 'Planning' }, tasks: { status: 'To Do', priority: 'Medium' }, finances: { transaction_date: today(), status: 'pending' }, inventory: { quantity: 1, condition: 'Baik' } };
-export default function Editor({ resource, item, onClose, onSaved }) {
+export default function Editor({ resource, item, onClose, onSaved, programId, programAssignees, basePath }) {
   const { user } = useAuth();
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [choices, setChoices] = useState({});
   const [choiceError, setChoiceError] = useState('');
   const dialog = useRef(null);
-  const fields = schemas[resource].filter(([name]) => name !== 'assignee_id' || canManage(user));
+  const [selectedPjs, setSelectedPjs] = useState(item?.assignee_ids || []);
+  const [selectedAssignee, setSelectedAssignee] = useState(item?.assignee_id || '');
+  const [selectedProgram, setSelectedProgram] = useState(programId || item?.program_id || '');
+  const eligibleIds = programAssignees || choices.programs?.find(p => p.id === selectedProgram)?.assignee_ids;
+  const fields = schemas[resource].filter(([name]) => (name !== 'assignee_id' || canManage(user)) && !(name === 'program_id' && programId));
   useEffect(() => {
-    dialog.current?.focus();
+    const previous = document.activeElement; dialog.current?.focus();
     const sources = [...new Set(schemas[resource].filter(([name]) => name !== 'assignee_id' || canManage(user)).map(field => field[2] === 'profiles_multiple' ? 'profiles' : field[2]).filter(type => type === 'programs' || type === 'profiles'))];
     let active = true;
     Promise.all(sources.map(async source => [source, await listAll(`/${source}`)]))
       .then(entries => { if (active) setChoices(Object.fromEntries(entries)); })
       .catch(failure => { if (active) setChoiceError(failure.message); });
-    return () => { active = false; };
+    return () => { active = false; if (previous?.isConnected) previous.focus(); };
   }, [resource, user]);
   async function submit(event) {
     event.preventDefault(); setBusy(true); setError('');
@@ -40,10 +45,11 @@ export default function Editor({ resource, item, onClose, onSaved }) {
     }));
     if (['programs','programProgress'].includes(resource) && payload.status === 'Completed') payload.progress = 100;
     if (resource === 'programs' && payload.assignee_ids.length) payload.pic = (choices.profiles || []).filter(profile => payload.assignee_ids.includes(profile.id)).map(profile => profile.name).join(', ');
+    if (resource === 'tasks' && programId) payload.program_id = programId;
     if (resource === 'tasks' && !canManage(user)) payload.assignee_id = item?.assignee_id || user.id;
     // Retain stored legacy icon data when editing; decorative emojis are no longer rendered.
     if (resource === 'inventory') payload.emoji = item?.emoji ?? null;
-    try { await api(resource === 'programProgress' ? `/programs/${item.id}/progress` : `/${resource}${item?.id ? `/${item.id}` : ''}`, { method: item?.id ? 'PUT' : 'POST', body: JSON.stringify(payload) }); onSaved(); }
+    try { await api(resource === 'programProgress' ? `/programs/${item.id}/progress` : `${basePath || `/${resource}`}${item?.id ? `/${item.id}` : ''}`, { method: item?.id ? 'PUT' : 'POST', body: JSON.stringify(payload) }); onSaved(); }
     catch (failure) { setError(failure.message); }
     finally { setBusy(false); }
   }
@@ -51,12 +57,12 @@ export default function Editor({ resource, item, onClose, onSaved }) {
     if (event.key === 'Tab') {
       const controls = [...dialog.current.querySelectorAll('button:not(:disabled),input,select,textarea')];
       const first = controls[0]; const last = controls.at(-1);
-      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
-      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog.current)) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && (document.activeElement === last || document.activeElement === dialog.current)) { event.preventDefault(); first?.focus(); }
     } }}><h2 id="editor-title">{item?.id ? 'Edit' : 'Tambah'} {resourceLabels[resource]}</h2><form onSubmit={submit}><div className="form-grid">{fields.map(([name,label,type,required]) => {
     const value = item?.[name] ?? defaults[resource]?.[name] ?? (Array.isArray(type) ? type[0] : '');
     const linked = type === 'profiles' || type === 'programs';
-    if (type === 'profiles_multiple') return <label key={name}>{label}<select multiple size={5} aria-label={label} name={name} defaultValue={item?.assignee_ids || []}>{(choices.profiles || []).map(profile => <option key={profile.id} value={profile.id}>{profile.name}</option>)}</select><small>Ctrl/Cmd + klik untuk memilih beberapa PJ.</small></label>;
-    return <label key={name}>{label}{Array.isArray(type) || linked ? <select aria-label={label} name={name} required={required} defaultValue={value}>{linked && <option value="">Tidak dipilih</option>}{(linked ? choices[type] || [] : type).map(option => <option key={linked ? option.id : option} value={linked ? option.id : option}>{linked ? option.name : option}</option>)}</select> : type === 'textarea' ? <textarea aria-label={label} name={name} defaultValue={value} maxLength={2000} /> : <input aria-label={label} name={name} type={type} defaultValue={value} required={required} min={type === 'number' ? (name === 'amount' ? 0.01 : 0) : undefined} max={name === 'progress' ? 100 : name === 'quantity' ? 1000000 : undefined} step={['amount','budget'].includes(name) ? '0.01' : type === 'number' ? '1' : undefined} maxLength={160} />}</label>;
+    if (type === 'profiles_multiple') return <label key={name}>{label}<select multiple required={required} size={5} aria-label={label} name={name} value={selectedPjs} onChange={event => setSelectedPjs([...event.target.selectedOptions].map(option => option.value))}>{(choices.profiles || []).map(profile => <option key={profile.id} value={profile.id}>{profile.name}</option>)}</select><small>Ctrl/Cmd + klik untuk memilih beberapa PJ.</small></label>;
+    return <label key={name}>{label}{Array.isArray(type) || linked ? <select aria-label={label} name={name} required={required} defaultValue={linked ? undefined : value} value={linked ? name === 'program_id' ? selectedProgram : selectedAssignee : undefined} onChange={linked ? event => { if (name === 'program_id') { setSelectedProgram(event.target.value); setSelectedAssignee(''); } else setSelectedAssignee(event.target.value); } : undefined}>{linked && <option value="">Tidak dipilih</option>}{(linked ? (choices[type] || []).filter(option => type !== 'profiles' || !eligibleIds || canManage(option) || eligibleIds.includes(option.id)) : type).map(option => <option key={linked ? option.id : option} value={linked ? option.id : option}>{linked ? option.name : option}</option>)}</select> : type === 'textarea' ? <textarea aria-label={label} name={name} defaultValue={value} maxLength={2000} /> : <input aria-label={label} name={name} type={type} defaultValue={value} required={required} min={type === 'number' ? (name === 'amount' ? 0.01 : 0) : undefined} max={name === 'progress' ? 100 : name === 'quantity' ? 1000000 : undefined} step={['amount','budget'].includes(name) ? '0.01' : type === 'number' ? '1' : undefined} maxLength={160} />}</label>;
   })}</div>{choiceError && <p className="error" role="alert">Pilihan relasi gagal dimuat: {choiceError}</p>}{error && <p className="error" role="alert">{error}</p>}<div className="actions"><button type="button" className="secondary" onClick={onClose} disabled={busy}>Batal</button><button className="primary" disabled={busy || Boolean(choiceError)}>{busy ? 'Menyimpan…' : 'Simpan'}</button></div></form></section></div>;
 }
