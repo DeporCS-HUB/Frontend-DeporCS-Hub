@@ -1,5 +1,11 @@
 # Depor CS HUB — development checkpoint
 
+## Checkpoint dokumentasi — 19 Oktober 2026
+
+Sembilan dokumen proyek tersedia pada root: [AGENTS.md](AGENTS.md), [PRD.md](PRD.md), [DESIGN.md](DESIGN.md), [ARCHITECTURE.md](ARCHITECTURE.md), [DATA.md](DATA.md), [API.md](API.md), [TASKS.md](TASKS.md), [CHANGELOG.md](CHANGELOG.md), dan [README.md](README.md). README/AGENTS disesuaikan dengan repository ini; aturan development, Free/$0 dan perlindungan kredensial tetap berlaku.
+
+Baseline kode yang didokumentasikan: frontend `cae6348`, backend `445813b`. Dokumentasi membedakan fitur yang sudah diimplementasikan dari rencana visual berdasarkan referensi baru. Tidak ada perubahan aplikasi, schema, data, akun, atau konfigurasi. Paragraf bertanggal lama di bawah merupakan riwayat; jangan memakai pernyataan lama tentang data kosong atau dashboard lama sebagai keadaan terkini.
+
 ## Compact KPI dashboard — 10 October 2026
 
 Dashboard now contains four compact KPIs and three responsive bar charts: activity percentage, selectable Staff metrics, and activity status distribution. Long narrative panels and the Staff responsibility table were removed. Programs and Tasks keep descriptions in bounded, keyboard-accessible Detail dialogs. Unknown percentage remains distinct from zero. No backend, database, Auth or paid-service changes. See [program workspace](docs/program-workspace.md).
