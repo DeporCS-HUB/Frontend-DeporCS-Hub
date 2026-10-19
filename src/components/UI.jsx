@@ -1,3 +1,4 @@
+import { programStatusGroup } from '../lib/programs';
 import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
 
 export function PageTitle({ title, subtitle, action }) {
@@ -40,9 +41,9 @@ export function Badge({ children, tone = 'cyan' }) {
   return <span className={`badge ${tone}`}>{children}</span>;
 }
 
-export function Progress({ value }) {
+export function Progress({ value, status }) {
   return (
-    <div className="progress">
+    <div className={`progress${status ? ` progress-${programStatusGroup(status)}` : ''}`}>
       <span style={{ width: `${value}%` }} />
     </div>
   );

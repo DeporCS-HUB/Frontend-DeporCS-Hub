@@ -104,3 +104,12 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px
 
 .login-intro h1 span { color: var(--red-bright); }
 .kpi:nth-child(4) .kpi-open { background: var(--red-strong); }
+
+/* Status semantics are separate from Depor's blue/red brand accents. */
+.progress-done span { background: var(--status-done); }.progress-running span { background: var(--status-running); }.progress-planned span { background: var(--status-planned); }.progress-unknown span { background: var(--status-unknown); }.progress-cancelled span { background: var(--status-cancelled); }
+.badge.status-done { color: var(--status-done); background: #10382F; }.badge.status-running { color: var(--status-running); background: var(--navy); }.badge.status-planned { color: var(--status-planned); background: #3F3315; }.badge.status-unknown { color: var(--light-gray); background: #263447; }.badge.status-cancelled { color: var(--status-cancelled); background: var(--red-tint); }
+.program-bars .kpi-chart-legend { margin: 8px 0 4px; font-size: 10px; gap: 4px 10px; }
+/* Keep the 0–100 axis anchored to the bars when the legend wraps. */
+.program-bars .program-chart-rows { height: 224px; background-size: 100% 170px; background-position: 0 21px; }
+.program-column .chart-track { flex: 0 0 170px; height: 170px; }
+.program-bars .percent-axis { inset: 13px auto auto 0; height: 187px; }

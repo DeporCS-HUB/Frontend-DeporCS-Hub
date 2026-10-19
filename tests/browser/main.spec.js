@@ -378,6 +378,8 @@ for(const width of [375,768,1440]) test(`reference composition and readable bars
  await login(page);await expect(page.getByLabel('Program 1: 100%',{exact:true})).toBeVisible();
  const metrics=await page.locator('.kpi-grid').boundingBox(),bars=await page.locator('.program-chart-card').boundingBox();
  if(width>600){expect(bars.x).toBeGreaterThan(metrics.x+metrics.width-1);expect(Math.abs(metrics.y-bars.y)).toBeLessThan(2);}else expect(bars.y).toBeGreaterThan(metrics.y+metrics.height-1);
+ const track=await page.locator('.program-column .chart-track').first().boundingBox(),top=await page.locator('.percent-axis span').first().boundingBox(),bottom=await page.locator('.percent-axis span').last().boundingBox();
+ expect(Math.abs(top.y+top.height/2-track.y)).toBeLessThan(3);expect(Math.abs(bottom.y+bottom.height/2-track.y-track.height)).toBeLessThan(3);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.screenshot({path:testInfo.outputPath(`reference-dashboard-${width}.png`),fullPage:true});
  await page.goto('/login');await page.getByRole('button',{name:'Logout',exact:true}).click();await expect(page.getByRole('heading',{name:'Masuk ke akun'})).toBeVisible();
@@ -388,7 +390,7 @@ function contrast(a,b) {
  const luminance=rgb=>rgb.match(/[\d.]+/g).slice(0,3).map(v=>Number(v)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4).reduce((sum,v,i)=>sum+v*[.2126,.7152,.0722][i],0);
  const [dark,light]=[luminance(a),luminance(b)].sort((x,y)=>x-y);return (light+.05)/(dark+.05);
 }
-test('blue/red theme keeps rendered text, controls and chart colors readable',async({page})=>{
+test('brand and semantic status colors keep rendered text, controls and charts readable',async({page})=>{
  const mock=await mockApi(page,'member');
  for(const [n,status]of ['Completed','Ongoing','Planning','Unspecified','Cancelled'].entries())mock.rows.programs.push({id:`color-${n}`,name:`Color activity ${n}`,kind:'Proker',status,progress:n===3?null:n===0?100:25,assignee_ids:[user.id]});
  await login(page);
@@ -404,6 +406,8 @@ test('blue/red theme keeps rendered text, controls and chart colors readable',as
  });
  for(const pair of [...pairs.text,pairs.secondary])expect(contrast(pair.fg,pair.bg),pair.name).toBeGreaterThanOrEqual(4.5);
  for(const pair of pairs.graphic)expect(contrast(pair.fg,pair.bg),pair.name).toBeGreaterThanOrEqual(3);
+ expect(pairs.graphic.map(p=>p.fg)).toEqual(['rgb(74, 222, 128)','rgb(96, 165, 250)','rgb(250, 204, 21)','rgb(148, 163, 184)','rgb(248, 113, 113)']);
+ for(const [n,key]of ['done','running','planned','unknown','cancelled'].entries())await expect(page.getByLabel(`Color activity ${n}: ${n===3?'belum diisi':n===0?'100%':'25%'}`,{exact:true}).locator(`.chart-${key}`)).toHaveCount(1);
  await page.getByRole('link',{name:'Keuangan',exact:true}).click();await expect(page.locator('.recharts-responsive-container')).toBeVisible();
  const legend=await page.locator('.chart-legend i').evaluateAll(els=>els.map(el=>getComputedStyle(el).borderTopColor));expect(legend).toEqual(['rgb(96, 165, 250)','rgb(255, 90, 90)']);
  await page.getByRole('button',{name:'Logout',exact:true}).click();await expect(page.getByRole('heading',{name:'Masuk ke akun'})).toBeVisible();

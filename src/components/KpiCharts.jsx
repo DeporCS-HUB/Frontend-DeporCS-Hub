@@ -1,8 +1,8 @@
+import { programStatusGroup as group, programStatusLabel } from '../lib/programs';
 const groups = [
  { key: 'done', label: 'Selesai' }, { key: 'running', label: 'Berjalan' },
  { key: 'planned', label: 'Rencana' }, { key: 'unknown', label: 'Belum diisi' }, { key: 'cancelled', label: 'Batal' },
 ];
-const group = status => status === 'Completed' ? 'done' : ['Ongoing','Active'].includes(status) ? 'running' : status === 'Planning' ? 'planned' : status === 'Cancelled' ? 'cancelled' : 'unknown';
 const counts = programs => programs.reduce((result,p) => { result[group(p.status)]++; return result; }, Object.fromEntries(groups.map(g => [g.key,0])));
 const label = name => name.match(/\(([A-Za-z0-9]+)\)$/)?.[1] || name.replace(/^UKOR /,'');
 function Legend() { return <div className="kpi-chart-legend">{groups.map(g => <span key={g.key}><i className={`chart-${g.key}`} />{g.label}</span>)}</div>; }
@@ -11,10 +11,10 @@ export function ProgramChart({ programs }) {
  return <figure className="kpi-chart program-bars" aria-label="Grafik persentase progres kegiatan">
  <div className="percent-axis" aria-hidden="true">{[100,75,50,25,0].map(n => <span key={n}>{n}%</span>)}</div>
  <div className="chart-rows program-chart-rows" tabIndex={0} role="region" aria-label="Data grafik kegiatan" style={{'--program-columns': Math.max(1, Math.min(programs.length,6))}}>
- {programs.map(p => <div className="chart-row program-column" key={p.id} aria-label={`${p.name}: ${p.progress == null ? 'belum diisi' : `${p.progress}%`}`}>
- <b>{p.progress == null ? '—' : `${p.progress}%`}</b><div className={`chart-track percent-track ${p.progress == null ? 'chart-missing' : ''}`} aria-hidden="true"><span className={p.status === 'Completed' ? 'chart-done' : 'chart-running'} style={{height:`${p.progress ?? 0}%`}} /></div><span className="chart-label" title={p.name}>{label(p.name)}</span>
+ {programs.map(p => <div className="chart-row program-column" key={p.id} title={programStatusLabel(p.status)} aria-description={programStatusLabel(p.status)} aria-label={`${p.name}: ${p.progress == null ? 'belum diisi' : `${p.progress}%`}`}>
+ <b>{p.progress == null ? '—' : `${p.progress}%`}</b><div className={`chart-track percent-track ${p.progress == null ? 'chart-missing' : ''}`} aria-hidden="true"><span className={`chart-${group(p.status)}`} style={{height:`${p.progress ?? 0}%`}} /></div><span className="chart-label" title={p.name}>{label(p.name)}</span>
  </div>)}
- </div>{!programs.length ? <p className="data-state">Belum ada kegiatan.</p> : <figcaption>— Belum diisi</figcaption>}</figure>;
+ </div>{programs.length > 0 && <Legend />}{!programs.length ? <p className="data-state">Belum ada kegiatan.</p> : <figcaption>— Persentase belum diisi</figcaption>}</figure>;
 }
 export function StaffChart({ staff, programs, metric }) {
  const byId = new Map(programs.map(p => [p.id,p]));
@@ -24,7 +24,7 @@ export function StaffChart({ staff, programs, metric }) {
  const total = metric === 'programs' ? assigned.length : metric === 'tasks' ? s.assignedTasks : maxUpdates;
  const value = metric === 'tasks' ? s.completedTasks : s.updatesLast30Days;
  const summary = metric === 'programs' ? groups.filter(g => values[g.key]).map(g => `${values[g.key]} ${g.label.toLowerCase()}`).join(', ') || 'Belum ada PJ' : metric === 'tasks' ? total ? `${value} dari ${total} tugas selesai` : 'Belum ada tugas' : `${value || 0} pembaruan dalam 30 hari`;
- return <div className="chart-row" key={s.id} aria-label={`${s.name}: ${summary}`} title={summary}><span className="chart-label">{s.name}</span>{metric === 'programs' && total ? <Segments values={values} total={total} /> : <div className={`chart-track ${!total ? 'chart-missing' : ''}`} aria-hidden="true"><span className="chart-done" style={{width:`${total ? (value || 0) / total * 100 : 0}%`}} /></div>}<b>{metric === 'programs' ? total || '—' : metric === 'tasks' ? total ? `${value}/${total}` : '—' : value || 0}</b></div>;
+ return <div className="chart-row" key={s.id} aria-label={`${s.name}: ${summary}`} title={summary}><span className="chart-label">{s.name}</span>{metric === 'programs' && total ? <Segments values={values} total={total} /> : <div className={`chart-track ${!total ? 'chart-missing' : ''}`} aria-hidden="true"><span className={metric === 'tasks' ? 'chart-done' : 'chart-running'} style={{width:`${total ? (value || 0) / total * 100 : 0}%`}} /></div>}<b>{metric === 'programs' ? total || '—' : metric === 'tasks' ? total ? `${value}/${total}` : '—' : value || 0}</b></div>;
  })}</div>{!staff.length && <p className="data-state">Belum ada data Staff.</p>}</figure>;
 }
 export function StatusChart({ programs, statusCounts, total = programs.length }) {

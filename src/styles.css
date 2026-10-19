@@ -13,6 +13,11 @@
   --red-bright: #FF5A5A;
   --red-chart: #EF4444;
   --red-tint: #441C2B;
+  --status-done: #4ADE80;
+  --status-running: #60A5FA;
+  --status-planned: #FACC15;
+  --status-unknown: #94A3B8;
+  --status-cancelled: #F87171;
   --border: #36577D;
   --gray: #8194B2;
   --light-gray: #CBD5E1;
@@ -270,11 +275,11 @@ td b { display: block; font-weight: 650; }
 .chart-row b { font-size: 12px; text-align: right; font-weight: 500; font-variant-numeric: tabular-nums; }
 .chart-track { height: 18px; background: var(--surface-light); border-radius: 2px; overflow: hidden; }
 .chart-track > span { display: block; height: 100%; }
-.chart-done { background: var(--blue-bright); color: var(--black); }
-.chart-running { background: var(--red-bright); color: var(--black); }
-.chart-planned { background: var(--blue-light); color: var(--black); }
-.chart-unknown { background-color: var(--gray); background-image: repeating-linear-gradient(135deg,var(--gray) 0 3px,var(--light-gray) 3px 6px); color: var(--black); }
-.chart-cancelled { background: var(--red-chart); color: var(--black); }
+.chart-done { background: var(--status-done); color: var(--black); }
+.chart-running { background: var(--status-running); color: var(--black); }
+.chart-planned { background: var(--status-planned); color: var(--black); }
+.chart-unknown { background-color: var(--status-unknown); background-image: repeating-linear-gradient(135deg,var(--status-unknown) 0 3px,var(--light-gray) 3px 6px); color: var(--black); }
+.chart-cancelled { background: var(--status-cancelled); color: var(--black); }
 .chart-missing { background: transparent; border: 1px dashed var(--gray); }
 .percent-track:not(.chart-missing) { background: repeating-linear-gradient(to right,var(--surface-light) 0 calc(25% - 1px),var(--gray) calc(25% - 1px) 25%); }
 .percent-axis { display: flex; justify-content: space-between; margin-left: calc(var(--chart-label-width) + 10px); margin-right: calc(var(--chart-value-width) + 10px); margin-bottom: 6px; color: var(--light-gray); font-size: 10px; }
@@ -343,7 +348,7 @@ td b { display: block; font-weight: 650; }
 .status-donut svg { width: 100%; height: 100%; }
 .status-donut circle { stroke-width: 14; }
 .donut-base { fill: none; stroke: var(--surface-light); }
-.donut-done { stroke: var(--blue-bright); }.donut-running { stroke: var(--red-bright); }.donut-planned { stroke: var(--blue-light); }.donut-unknown { stroke: var(--gray); }.donut-cancelled { stroke: var(--red-chart); }
+.donut-done { stroke: var(--status-done); }.donut-running { stroke: var(--status-running); }.donut-planned { stroke: var(--status-planned); }.donut-unknown { stroke: var(--status-unknown); }.donut-cancelled { stroke: var(--status-cancelled); }
 .status-donut > div { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .status-donut strong { font-size: 32px; }.status-donut small { color: var(--light-gray); font-size: 10px; }
 .donut-legend { min-width: 170px; margin: 0 !important; display: grid; gap: 12px; }
