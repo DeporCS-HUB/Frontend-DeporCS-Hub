@@ -6,6 +6,7 @@ import { NavLink, Outlet } from 'react-router-dom';
 import { CalendarDays, ChevronLeft, ClipboardList, FolderKanban, LayoutDashboard, Menu, Package, Settings, Users, WalletCards } from 'lucide-react';
 
 import DataState from './DataState';
+import Avatar from './Avatar';
 
 const navigationItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -33,7 +34,7 @@ export default function Layout(){
   </aside>
   {isMobileMenuOpen&&<button className="scrim" type="button" onClick={closeMobileMenu} aria-label="Tutup navigasi"/>}
   <main className="main">
-   <header className="topbar"><button className="icon-btn mobile-menu" type="button" aria-label="Buka navigasi" aria-controls="main-navigation" aria-expanded={isMobileMenuOpen} onClick={()=>setIsMobileMenuOpen(true)}><Menu/></button><div className="workspace-label">DEPOR <span>CS HUB</span></div><div className="top-actions"><button className="secondary" onClick={signOut} disabled={logoutBusy}>{logoutBusy ? "Keluar…" : "Logout"}</button><div className="avatar">{user.name.slice(0,2).toUpperCase()}</div><div className="profile"><b>{user.name}</b><small>{roleLabel(user)}</small></div></div></header>
+   <header className="topbar"><button className="icon-btn mobile-menu" type="button" aria-label="Buka navigasi" aria-controls="main-navigation" aria-expanded={isMobileMenuOpen} onClick={()=>setIsMobileMenuOpen(true)}><Menu/></button><div className="workspace-label">DEPOR <span>CS HUB</span></div><div className="top-actions"><button className="secondary" onClick={signOut} disabled={logoutBusy}>{logoutBusy ? "Keluar…" : "Logout"}</button><Avatar user={user} /><div className="profile"><b>{user.name}</b><small>{roleLabel(user)}</small></div></div></header>
    <div className="page" id="page-content" tabIndex={-1}><Suspense fallback={<DataState loading />}><Outlet/></Suspense></div>
   </main>
  </div>

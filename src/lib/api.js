@@ -70,6 +70,20 @@ export async function updateProfile(name) {
   if (snapshot.user?.id === userId && data.id === userId) publish({ ...snapshot.user, name: data.name });
   return data;
 }
+
+export async function updateAvatar(image) {
+  const userId = snapshot.user?.id;
+  const { data } = await api('/profiles/me/avatar', { method: image == null ? 'DELETE' : 'PUT', ...(image == null ? {} : { body: JSON.stringify({ image }) }) });
+  if (snapshot.user?.id === userId && data.id === userId) publish({ ...snapshot.user, avatar_path: data.avatar_path });
+  return data;
+}
+export async function changePassword(currentPassword, newPassword) {
+  const generation = sessionGeneration; const previous = snapshot.user;
+  const { data } = await api('/auth/password', { method: 'POST', body: JSON.stringify({ currentPassword, newPassword }) });
+  if (generation !== sessionGeneration || data.user?.id !== snapshot.user?.id) throw new Error('Session berubah. Silakan login kembali.');
+  const recent = Object.fromEntries(['name','avatar_path'].filter(key => snapshot.user[key] !== previous[key]).map(key => [key,snapshot.user[key]]));
+  return accept({ ...data, user: { ...data.user, ...recent } });
+}
 export async function logout() {
   try { await api('/auth/logout', { method: 'POST' }); accessToken = null; publish(null); }
   catch (error) { accessToken = null; publish(null, `Logout server gagal: ${error.message}`); throw error; }

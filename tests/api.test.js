@@ -133,3 +133,25 @@ test('cached lists retain pagination metadata independently for each filter', as
  await api.api('/programs?kind=UKOR');await api.api('/programs?kind=Proker');
  assert.equal(api.cachedResponse('/programs?kind=UKOR').meta.hasMore,true);assert.equal(api.cachedResponse('/programs?kind=Proker').meta.hasMore,false);
 });
+
+test('avatar changes publish only the confirmed own path and invalidate reads',async()=>{
+ const api=await fresh();let photo='old/path.jpg';
+ globalThis.fetch=async(url,options)=>url.endsWith('/auth/login')?response({data:{...session,user:{...session.user,avatar_path:photo}}}):options.method==='PUT'?response({data:{id:session.user.id,avatar_path:'new/path.jpg',role:'admin'}}):response({data:[]});
+ await api.login('owner@example.invalid','test');await api.api('/programs');await api.updateAvatar('test-image');
+ assert.equal(api.authStore.getSnapshot().user.avatar_path,'new/path.jpg');assert.equal(api.authStore.getSnapshot().user.role,'member');assert.equal(api.cachedResource('/programs'),undefined);
+});
+test('password change accepts fresh access session but never stores password fields',async()=>{
+ const api=await fresh();let observed;
+ globalThis.fetch=async(url,options)=>{observed=options;return url.endsWith('/auth/login')?response({data:session}):url.endsWith('/auth/password')?response({data:{...session,accessToken:'fresh-after-password',passwordChanged:true}}):response({data:[]});};
+ await api.login('owner@example.invalid','test');await api.changePassword('old-test-value','new-test-value');await api.api('/tasks');assert.equal(observed.headers.Authorization,'Bearer fresh-after-password');assert.equal(api.authStore.getSnapshot().user.currentPassword,undefined);assert.equal(api.authStore.getSnapshot().user.newPassword,undefined);
+});
+test('wrong current password keeps existing session and causes no refresh loop',async()=>{
+ const api=await fresh();let refreshes=0;
+ globalThis.fetch=async url=>{if(url.endsWith('/auth/login'))return response({data:session});if(url.endsWith('/auth/refresh'))refreshes++;return response({error:{message:'Password mismatch'}},400);};
+ await api.login('owner@example.invalid','test');await assert.rejects(api.changePassword('wrong-test-value','new-test-value'),/Password mismatch/);assert.equal(api.authStore.getSnapshot().user.id,session.user.id);assert.equal(refreshes,0);
+});
+test('password response cannot revert a concurrently confirmed avatar change',async()=>{
+ const api=await fresh();let resolvePassword;
+ globalThis.fetch=async(url)=>url.endsWith('/auth/login')?response({data:session}):url.endsWith('/auth/password')?new Promise(resolve=>{resolvePassword=()=>resolve(response({data:{...session,accessToken:'fresh-after-password'}}));}):response({data:{id:session.user.id,avatar_path:'confirmed-new-photo'}});
+ await api.login('owner@example.invalid','test');const pending=api.changePassword('old-test-value','new-test-value');await Promise.resolve();await api.updateAvatar('test-image');resolvePassword();await pending;assert.equal(api.authStore.getSnapshot().user.avatar_path,'confirmed-new-photo');
+});

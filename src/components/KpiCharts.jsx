@@ -1,7 +1,7 @@
 import { programStatusGroup as group, programStatusLabel } from '../lib/programs';
 const groups = [
- { key: 'done', label: 'Selesai' }, { key: 'running', label: 'Berjalan' },
- { key: 'planned', label: 'Rencana' }, { key: 'unknown', label: 'Belum diisi' }, { key: 'cancelled', label: 'Batal' },
+ { key: 'done', label: 'Finished' }, { key: 'running', label: 'On Going' },
+ { key: 'planned', label: 'Planning' }, { key: 'unknown', label: 'Belum diisi' }, { key: 'cancelled', label: 'Batal' },
 ];
 const counts = programs => programs.reduce((result,p) => { result[group(p.status)]++; return result; }, Object.fromEntries(groups.map(g => [g.key,0])));
 const label = name => name.match(/\(([A-Za-z0-9]+)\)$/)?.[1] || name.replace(/^UKOR /,'');

@@ -4,7 +4,7 @@ const summary = { activePrograms: 1, totalPrograms: 1, completedPrograms: 0, pen
 async function mockApi(page, role = 'staff') {
  let signedIn = false; const counts = {}; const extraProfiles=[];
  let profile = { ...user, role, departmentRole: role === 'member' ? 'staff' : 'bph' };
- let failEvent = false; let failProfile = false;
+ let failEvent = false; let failProfile = false; let failPhoto = false; let failPassword = false;
  const rows = { events: [], programs: [], finances: [], inventory: [], tasks: [{ id: 'task-id', title: 'Review proposal', description: '', status: 'To Do', priority: 'Medium', program_id: null, assignee_id: user.id, due_date: null, created_by: user.id }] };
  const notes = []; const milestones = []; const timeline = [];
  let failTask = false; let failProgress = false; let progressUpdates = 0;
@@ -46,6 +46,15 @@ async function mockApi(page, role = 'staff') {
     if(req.method()==='DELETE'){milestones.splice(milestones.indexOf(m),1);return reply({deleted:true});}
    }
   }
+  if(path==='auth/password') {
+   if(failPassword || req.postDataJSON().currentPassword!=='old-test-password')return reply('Password saat ini tidak sesuai.',400);
+   return reply({accessToken:'new-test-session',expiresIn:3600,user:profile,passwordChanged:true});
+  }
+  if(path==='profiles/me/avatar') {
+   if(req.method()==='GET')return reply({available:Boolean(profile.avatar_path),url:profile.avatar_path?'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jDk0AAAAASUVORK5CYII=':undefined,expiresIn:900});
+   if(failPhoto)return reply('Foto gagal disimpan.',503);
+   profile={...profile,avatar_path:req.method()==='DELETE'?null:`${profile.id}/00000000-0000-0000-0000-000000000009.jpg`};return reply(profile);
+  }
   if (path === 'profiles/me') {
    if (failProfile) return reply('Profile unavailable', 503);
    profile = { ...profile, name: req.postDataJSON().name }; return reply(profile);
@@ -57,7 +66,7 @@ async function mockApi(page, role = 'staff') {
    let records = resource === 'profiles' ? [profile,...extraProfiles] : resource === 'tasks' ? filteredTasks() : rows[resource] || [];
    const q = url.searchParams.get('q')?.toLowerCase();
    if(q) records = records.filter(row => Object.values(row).some(v => typeof v === 'string' && v.toLowerCase().includes(q)));
-   for(const key of ['status','kind','priority','permit_status','type','departmentRole']) { const value=url.searchParams.get(key); if(value) records=records.filter(row=>row[key]===value); }
+   for(const key of ['status','kind','priority','permit_status','type','departmentRole']) { const value=url.searchParams.get(key); if(value) records=records.filter(row=>resource==='programs'&&key==='status'&&value==='Ongoing'?['Ongoing','Active'].includes(row.status):row[key]===value); }
    const size=Number(url.searchParams.get('size')||50), index=Number(url.searchParams.get('page')||0)*size;
    return reply(records.slice(index,index+size),200,{hasMore:records.length>index+size});
   }
@@ -67,7 +76,7 @@ async function mockApi(page, role = 'staff') {
   if (req.method() === 'DELETE') { rows[resource] = rows[resource].filter(row => row.id !== id);return reply({ deleted: true }); }
   return reply('Not found',404);
  });
- return { failEvent() { failEvent = true; }, failProfile() { failProfile = true; }, failTask() { failTask = true; }, failProgress() { failProgress=true; }, profiles:extraProfiles, rows, counts, notes, milestones, timeline };
+ return { failPhoto(){failPhoto=true;}, failPassword(){failPassword=true;}, failEvent() { failEvent = true; }, failProfile() { failProfile = true; }, failTask() { failTask = true; }, failProgress() { failProgress=true; }, profiles:extraProfiles, rows, counts, notes, milestones, timeline };
 }
 async function login(page) {
  await page.goto('/'); await expect(page).toHaveURL(/login/);
@@ -87,7 +96,7 @@ test('protected login, program CRUD, persistence after reload, and logout', asyn
  await page.getByRole('button', { name: 'Edit', exact: true }).click();
  await page.getByLabel('Status', { exact: true }).selectOption('Completed');
  await page.getByRole('button', { name: 'Simpan', exact: true }).click();
- await expect(page.getByRole('cell', { name: /Selesai/ })).toBeVisible();
+ await expect(page.getByRole('cell', { name: /Finished/ })).toBeVisible();
  await page.reload(); await expect(page.getByRole('cell', { name: 'Development Tournament' })).toBeVisible();
  page.once('dialog', dialog => dialog.accept());
  await page.getByRole('button', { name: 'Hapus', exact: true }).click();
@@ -340,7 +349,7 @@ test('KPI charts distinguish unknown progress from zero and switch Staff metrics
  await expect(page.getByLabel('Zero activity: 0%',{exact:true})).toBeVisible();
  await expect(page.locator('.program-chart-rows .chart-missing')).toHaveCount(1);
  await expect(page.locator('.kpi').filter({hasText:'Progres tercatat'})).toContainText('2 / 3');
- await expect(page.getByLabel('Development Staff: 1 selesai, 1 berjalan, 1 belum diisi',{exact:true})).toBeVisible();
+ await expect(page.getByLabel('Development Staff: 1 finished, 1 on going, 1 belum diisi',{exact:true})).toBeVisible();
  await page.getByLabel('Metrik Staff').selectOption('tasks');
  await expect(page.getByLabel('Development Staff: 0 dari 1 tugas selesai',{exact:true})).toBeVisible();
  await page.getByLabel('Metrik Staff').selectOption('updates');
@@ -388,7 +397,7 @@ for (const width of [375,768,1440]) test(`populated dashboard fits ${width}px wi
  await page.setViewportSize({width,height:900});const mock=await mockApi(page,'member');
  for(let n=0;n<35;n++)mock.rows.programs.push({id:`c-${n}`,name:`Activity ${n}`,kind:n%2?'Proker':'UKOR',status:n===34?'Completed':'Ongoing',progress:n===34?100:null,assignee_ids:n===34?[user.id]:[]});
  await login(page);await expect(page.locator('.kpi').filter({hasText:'Progres tercatat'})).toContainText('1 / 35');
- await expect(page.getByLabel('Development Staff: 1 selesai',{exact:true})).toBeVisible();
+ await expect(page.getByLabel('Development Staff: 1 finished',{exact:true})).toBeVisible();
  const chart=page.getByRole('region',{name:'Data grafik kegiatan'});expect((await chart.boundingBox()).height).toBeLessThanOrEqual(320);await chart.focus();await expect(chart).toBeFocused();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.screenshot({path:testInfo.outputPath(`dashboard-${width}.png`),fullPage:true});
@@ -491,4 +500,31 @@ test('manual refresh loads external task changes and removes a revoked program w
  await page.getByRole('button',{name:'Muat ulang tugas'}).click();await expect(page.getByLabel('Status Review proposal')).toHaveValue('Review');expect(mock.counts['PUT tasks/task-id/status']).toBeUndefined();
  await page.goto('/programs/revoked-unit');await expect(page.getByRole('heading',{name:'Revocable unit',exact:true})).toBeVisible();mock.rows.programs[0].assignee_ids=[];
  await page.getByRole('button',{name:'Muat ulang program'}).click();await expect(page.getByRole('alert')).toContainText('akses tidak tersedia');await expect(page.getByRole('button',{name:'Update progres'})).toHaveCount(0);
+});
+
+const photoFixture=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jDk0AAAAASUVORK5CYII=','base64');
+for(const width of [375,1440])test(`own photo preview, upload, reload and removal at ${width}px`,async({page},testInfo)=>{
+ await page.setViewportSize({width,height:1000});const mock=await mockApi(page,'member');await login(page);await page.goto('/settings');
+ await page.getByLabel('Pilih foto profil').setInputFiles({name:'avatar.png',mimeType:'image/png',buffer:photoFixture});await expect(page.getByRole('img',{name:'Pratinjau foto profil'})).toBeVisible();expect(mock.counts['PUT profiles/me/avatar']).toBeUndefined();
+ await page.getByRole('button',{name:'Simpan foto',exact:true}).click();await expect(page.getByRole('status')).toContainText('Foto profil diperbarui.');await expect(page.locator('.topbar img[alt="Foto profil"]')).toBeVisible();
+ await page.reload();await expect(page.locator('.photo-preview img[alt="Foto profil"]')).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:testInfo.outputPath(`settings-${width}.png`),fullPage:true});
+ await page.getByRole('button',{name:'Hapus foto',exact:true}).click();await expect(page.getByRole('status')).toContainText('Foto profil dihapus.');await expect(page.locator('.topbar img')).toHaveCount(0);
+});
+test('photo validation and failed storage retain the selected preview without publishing a photo',async({page})=>{
+ const mock=await mockApi(page);await login(page);await page.goto('/settings');
+ await page.getByLabel('Pilih foto profil').setInputFiles({name:'avatar.svg',mimeType:'image/svg+xml',buffer:Buffer.from('<svg/>')});await expect(page.getByRole('alert')).toContainText('JPG, PNG, atau WebP');expect(mock.counts['PUT profiles/me/avatar']).toBeUndefined();
+ await page.getByLabel('Pilih foto profil').setInputFiles({name:'avatar.png',mimeType:'image/png',buffer:photoFixture});await expect(page.getByRole('img',{name:'Pratinjau foto profil'})).toBeVisible();mock.failPhoto();await page.getByRole('button',{name:'Simpan foto',exact:true}).click();await expect(page.getByRole('alert')).toContainText('Foto gagal disimpan');await expect(page.getByRole('img',{name:'Pratinjau foto profil'})).toBeVisible();await expect(page.locator('.topbar img')).toHaveCount(0);await expect(page.getByRole('button',{name:'Simpan foto',exact:true})).toBeEnabled();
+});
+test('password confirmation, current-password failure and successful fresh session',async({page})=>{
+ const mock=await mockApi(page,'member');await login(page);await page.goto('/settings');
+ await page.getByLabel('Password saat ini',{exact:true}).fill('wrong-test-password');await page.getByLabel('Password baru',{exact:true}).fill('updated-test-password');await page.getByLabel('Konfirmasi password baru',{exact:true}).fill('different-test-password');await page.getByRole('button',{name:'Ganti password',exact:true}).click();await expect(page.getByRole('alert')).toContainText('Konfirmasi password');expect(mock.counts['POST auth/password']).toBeUndefined();
+ await page.getByLabel('Konfirmasi password baru',{exact:true}).fill('updated-test-password');await page.getByRole('button',{name:'Ganti password',exact:true}).click();await expect(page.getByRole('alert')).toContainText('Password saat ini tidak sesuai');await expect(page.getByLabel('Password baru',{exact:true})).toHaveValue('updated-test-password');await expect(page.locator('.profile small')).toHaveText('Staff');
+ await page.getByLabel('Password saat ini',{exact:true}).fill('old-test-password');await page.getByLabel('Tampilkan password',{exact:true}).check();await expect(page.getByLabel('Password baru',{exact:true})).toHaveAttribute('type','text');
+ await page.getByRole('button',{name:'Ganti password',exact:true}).click();await expect(page.getByRole('status')).toContainText('Password berhasil diubah.');await expect(page.getByLabel('Password baru',{exact:true})).toHaveValue('');await expect(page.getByLabel('Password saat ini',{exact:true})).toHaveValue('');await expect(page.getByLabel('Tampilkan password',{exact:true})).not.toBeChecked();
+ await page.reload();await expect(page.getByRole('heading',{name:'Ganti password',exact:true})).toBeVisible();expect(mock.counts['POST auth/password']).toBe(2);
+});
+test('program status uses three main choices and On Going finds legacy Active',async({page})=>{
+ const mock=await mockApi(page);mock.rows.programs.push({id:'legacy-active',name:'Legacy active program',status:'Active',kind:'UKOR',pic:'Development Staff',assignee_ids:[user.id],progress:20});await login(page);await page.goto('/programs');
+ await page.getByLabel('Filter status program').selectOption('Ongoing');await expect(page.getByRole('cell',{name:'Legacy active program'})).toBeVisible();await expect(page.locator('tbody .badge.status-running')).toHaveText('On Going');
+ await page.getByRole('button',{name:'Edit',exact:true}).click();await expect(page.getByLabel('Status',{exact:true}).locator('option')).toHaveText(['Planning','On Going','Finished']);await expect(page.getByLabel('Status',{exact:true})).toHaveValue('Ongoing');await page.getByLabel('Status',{exact:true}).selectOption('Completed');await page.getByRole('button',{name:'Simpan',exact:true}).click();await page.getByLabel('Filter status program').selectOption('Completed');await expect(page.locator('tbody .badge.status-done')).toHaveText('Finished');
 });
