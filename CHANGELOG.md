@@ -2,6 +2,14 @@
 
 Tanggal memakai YYYY-MM-DD. Entri berasal dari riwayat repository dan checkpoint percakapan yang tersedia. Tidak ada nomor versi aplikasi semantik yang direka.
 
+## 2026-10-19 — Komposisi visual sesuai referensi
+
+- Mengganti susunan lama dengan KPI 2×2 di kiri dan chart batang vertikal dominan di kanan; Staff dan donut ditempatkan berdampingan di bawah.
+- Workspace inset, sidebar ikon sebagai default, panel membulat dan toolbar lebih rapat mengikuti gambar referensi, tetap memakai palet Depor.
+- Halaman login memakai panel identitas dan form terpisah; menu, form, chart scroll dan dialog tetap responsif.
+- Tidak mengubah backend, database, akun, angka KPI, atau layanan hosting.
+- Validasi: lint, build, 23 unit test dan 25 browser flow mock; screenshot dashboard/login diperiksa pada 375/768/1440 px.
+
 ## 2026-10-19 — Filter server dan KPI global
 
 - Search literal dan filter tervalidasi untuk enam resource, pagination lookahead/hasMore, debounce dan reset halaman; ukuran halaman lebih pendek.

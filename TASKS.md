@@ -17,11 +17,13 @@ Daftar ini memisahkan baseline yang terbukti pada kode dari pekerjaan berikutnya
 
 - [x] DATA-01: KPI global, distribusi status global, status Staff dari assignment lengkap; SQL rollback 35 program dan browser dataset >30.
 - [x] UX-02: pencarian/filter server pada enam resource, debounce, reset halaman, metadata hasMore; kasus target di luar 100 record diuji.
-- [x] UX-01: KPI putih dominan dan donut status, palet Depor, chart/deskripsi ringkas.
+- [x] UX-01: revisi komposisi referensi — KPI 2×2 kiri/chart vertikal kanan, Staff/donut baris kedua, sidebar ikon dan workspace membulat; inspeksi screenshot desktop/tablet/mobile.
 - [x] QA-02: browser mock 375/768/1440 px; overflow, fokus chart, navigasi, dialog dan form.
 - [x] UX-03: pagination list lebih pendek, chart panjang dengan scroll internal dan link daftar lengkap.
 
 Validasi: Java 62 tes; frontend lint/build dan 23 unit test; empat suite SQL disposable; browser mock 22 flow. Migrasi hosted dan baca RPC dengan simulated JWT berbeda dari login Auth nyata. QA-01 tetap tertunda: kredensial uji aman belum tersedia, tidak ada reset akun/data.
+
+Revisi visual berikutnya divalidasi dengan 25 browser flow mock, termasuk geometri komposisi dan screenshot login/dashboard 375/768/1440 px; tidak mengubah database/Auth.
 
 ## Pekerjaan berikutnya
 
