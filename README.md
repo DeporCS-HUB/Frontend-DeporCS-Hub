@@ -1,83 +1,99 @@
 # Depor CS HUB Frontend
 
-## Compact KPI dashboard — 10 October 2026
+Aplikasi internal Departemen Olahraga BEM Fasilkom UI untuk memantau Proker/UKOR, membagi tugas, memperbarui progres, dan mencatat keuangan, inventaris serta kegiatan.
 
-Dashboard now contains four compact KPIs and three responsive bar charts: activity percentage, selectable Staff metrics, and activity status distribution. Long narrative panels and the Staff responsibility table were removed. Programs and Tasks keep descriptions in bounded, keyboard-accessible Detail dialogs. Unknown percentage remains distinct from zero. No backend, database, Auth or paid-service changes. See [program workspace](docs/program-workspace.md).
+Dokumentasi lintas repository ini disusun 19 Oktober 2026 dari frontend `cae63480492c8c1ba4831142114e01c6461d129e` dan backend `445813be49409da21bc21ef88a12abb54bad3829`. Referensi `main` kedua repository diperiksa sesuai commit tersebut. Tidak ada audit ulang isi database, billing, atau login hosted dalam pekerjaan dokumentasi ini.
 
+## Dokumentasi proyek
 
-## Program workspace — 10 October 2026
+| Dokumen | Isi |
+| --- | --- |
+| [AGENTS.md](AGENTS.md) | Aturan kerja, batas biaya/data, verifikasi dan definition of done |
+| [PRD.md](PRD.md) | Tujuan, pengguna, kebutuhan dan acceptance criteria |
+| [DESIGN.md](DESIGN.md) | Referensi dashboard, token visual, komponen dan UX |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Dua repository, Auth, API, cache dan deployment |
+| [DATA.md](DATA.md) | Schema, hubungan, role, enum, null dan audit |
+| [API.md](API.md) | Endpoint, payload, pagination, izin dan error |
+| [TASKS.md](TASKS.md) | Baseline dan backlog prioritas |
+| [CHANGELOG.md](CHANGELOG.md) | Riwayat perubahan dengan bukti commit/PR |
+| README.md | Cara membaca paket dan menjalankan proyek |
 
-Dashboard now shows operational Proker/UKOR progress, upcoming milestones, follow-up tasks and Staff contributions. The Programs page supports multiple PJ accounts; assigned Staff can update their activity status, percentage and progress notes. BPH retains full editing and PJ assignment. Unknown progress remains blank instead of being treated as zero. See [program workspace](docs/program-workspace.md).
+Kesembilan dokumen tersedia pada root repository ini. Repository ini memuat komponen Frontend; penjelasan komponen pasangan disertakan agar kontrak proyek konsisten. Aturan AGENTS sebelumnya tetap dipertahankan dan riwayat implementasi tersedia di [CODEX_HANDOFF.md](CODEX_HANDOFF.md).
 
+## Repository dan target aplikasi
 
-React 19 + Vite. Main screens use the companion Java 21/Spring Boot API in `DeporCS-HUB/Backend-DeporCS-Hub`; no dummy department records are used.
+- Frontend: https://github.com/DeporCS-HUB/Frontend-DeporCS-Hub
+- Backend: https://github.com/DeporCS-HUB/Backend-DeporCS-Hub
+- URL frontend yang dipakai proyek: https://depor-cs-hub-web.vercel.app/
+- URL API yang dipakai proyek: https://depor-cs-hub-api.vercel.app/api
 
+Data operasional berasal dari backend/Supabase. Hardcoded hanya sesuai untuk konstanta UI dan fixture tes. DATA.md dan API.md tetap diperlukan walaupun tidak mengonsumsi konten publik dari API eksternal.
 
-## Current department roles
+## Fitur baseline
 
-The UI uses **BPH** (management) and **Staff** (executing members). The backend returns a trusted departmentRole while keeping stored legacy profile.role values compatible with existing accounts and RLS: staff/admin -> BPH, member -> Staff. The development directory contains 4 BPH and 13 Staff accounts using `name@depor.com`; the activity roster is populated in development. See [role adjustment](https://github.com/DeporCS-HUB/Backend-DeporCS-Hub/blob/main/docs/role-adjustment.md) for permissions and rollout.
+Login dan sesi; KPI/chart dashboard; Proker/UKOR multiple PJ; update progres oleh PJ/BPH; kanban tugas; catatan keuangan; inventaris; events; direktori tim; edit nama profile sendiri. Deskripsi panjang dibaca melalui Detail.
 
-## Depor interface
+Belum tersedia: upload LPJ/lampiran, undangan akun, role administration UI, absensi, notifikasi, atau pengiriman izin venue. Lihat [PRD.md](PRD.md) untuk batas implementasi.
 
-The interface uses the user's black, charcoal, navy and muted red palette in `src/styles.css`. Compact headings, flat panels, Indonesian navigation and readable dark charts replace the decorative dashboard banner. Forms and management actions remain available on mobile; collapsed navigation keeps accessible labels. Typography uses system fonts, and routes/charts retain lazy loading and the bounded in-memory API cache. The typographic D mark is an application placeholder, not an official Depor logo.
+## Menjalankan frontend
 
-## Run locally
-
-Use Node 22+ for frontend tooling only. Start the Java backend on port 8080 with **development** Supabase configuration, apply its migration, and create development Auth accounts before testing real login.
+Prasyarat: Node 22+ dan npm; ikuti lockfile repository. Jalankan perintah berikut dari direktori clone `Frontend-DeporCS-Hub`.
 
 ```sh
 npm ci
 npm run dev
 ```
 
-Open `http://localhost:3000`. Vite proxies `/api` to `http://localhost:8080`; change `API_PROXY_TARGET` in your development environment if needed. The backend's exact allowed origin must include `http://localhost:3000`; local HTTP requires `APP_COOKIE_SECURE=false`.
+Frontend lokal berjalan pada `http://localhost:3000`. Vite meneruskan `/api` ke `http://localhost:8080`. `API_PROXY_TARGET` dapat mengganti target lokal. `VITE_API_URL` opsional saat lokal; untuk deployment terpisah, nilainya adalah URL API HTTPS berakhiran `/api`.
 
-`VITE_API_URL` is optional; default `/api`. For a separately hosted API, set it to that service's HTTPS URL including `/api`. Every `VITE_*` value becomes public build output. The frontend needs **no Supabase key**, service role key, database credentials, or JWT signing secret. Keep sensitive environment values only in the backend's secure settings.
+Tidak diperlukan Supabase key, database credential, atau secret di frontend. Semua `VITE_*` terlihat di browser.
 
-## Main flows
+## Menjalankan backend
 
-- Login uses backend/Supabase Auth; protected routes wait for session restoration. Access tokens exist only in memory. Refresh tokens are HttpOnly cookies managed by the backend, with synchronized refresh and one retry after a 401. Expired sessions return to login.
-- Dashboard totals and current-year charts come from the database RPC. No made-up event counts, attendance, trends, or notifications are shown.
-- BPH can create, edit, delete, and change status for programs, finance transactions, and inventory. Roles come from the backend and are also enforced by backend/RLS.
-- Staff can read department data and create/update/delete tasks according to ownership. BPH can assign tasks to other profiles. Task statuses can be changed by select or drag/drop; the board changes only after a successful API write.
-- All collections have loading, empty, error, retry, and pagination controls. Search/status filters apply to the current page (100 rows). Linked form choices fetch subsequent pages as needed. Successful writes refresh both lists and dashboard summaries; failed writes display errors and retain server-confirmed data.
-- Program deletion can return 409 when tasks/transactions still reference it. Handle those records first; the UI does not silently cascade them.
-
-- Events lists real schedules and venue/permit statuses. BPH can create, edit, and delete events linked to programs; Staff have read-only controls. Search and permit filters apply to the current page. Staff record venue confirmations manually; the app does not send applications or issue permits.
-- Settings saves the signed-in account's display name through `PUT /profiles/me`. The header updates only after a successful write, and session restoration loads the saved name. Role and activation cannot be edited.
-
-Apply both backend migrations, including `20261008154204_events_profiles.sql`, before using Events or profile editing.
-
-Team is a live read-only profile directory. Invitations, role editing, organization structure, attendance, external permit approval workflows, and language/theme/notification preferences are not implemented. QR scanning, files/reports, and notification delivery are not implemented.
-
-## Build and verify
+Prasyarat: Java 21, Maven 3.9+, dan environment development yang dikonfigurasi secara aman. Jalankan perintah berikut dari direktori clone `Backend-DeporCS-Hub`.
 
 ```sh
-npm run build
+mvn verify
+mvn spring-boot:run
+```
+
+| Environment | Penggunaan |
+| --- | --- |
+| SUPABASE_URL | URL project development yang diizinkan |
+| SUPABASE_ANON_KEY | Public API key untuk adapter; request data tetap memakai JWT pengguna |
+| APP_ALLOWED_ORIGINS | Origin frontend persis; lokal http://localhost:3000 |
+| APP_COOKIE_SECURE | false hanya untuk HTTP lokal; true untuk HTTPS |
+| APP_COOKIE_SAME_SITE | Lax lokal; None + secure untuk model domain terpisah yang dipakai |
+| PORT | Default 8080; sesuaikan port routing hosting |
+| SUPABASE_CONNECT_TIMEOUT_MS | Default 5000 |
+| SUPABASE_READ_TIMEOUT_MS | Default 10000 |
+
+Spring tidak memuat file .env otomatis. Gunakan environment shell/IDE/hosting tanpa memasukkan secret ke Git atau argumen command. Runtime normal tidak membutuhkan service-role key maupun JWT_SECRET buatan aplikasi.
+
+Database development yang diizinkan: `dajpnhkutkhgxwkjzvpg`. Gunakan migration yang sudah tercatat dengan benar; jangan reset/seed hosted sebagai langkah startup rutin. Akun memerlukan Auth valid dan profile aktif; tidak ada akun/password bawaan dalam paket.
+
+## Pemeriksaan
+
+Frontend:
+
+```sh
 npm run lint
 npm test
+npm run build
 npx playwright install chromium
 npm run test:browser
 ```
 
-The suite has **22 unit tests** covering API/session refresh concurrency, expiry, failed mutations, pagination, logout, role compatibility and cache invalidation/account isolation. **17 Playwright browser tests** cover login/routing, CRUD and reload, failed writes, BPH/Staff permissions, profile editing, cached navigation, desktop collapsed navigation and mobile forms at 375 px. Build, lint, unit tests and browser tests pass locally. Desktop/mobile screenshots are checked manually. Browser tests use a **mocked API**; they do not certify live Supabase login, hosted persistence or browser cookie behavior.
+Backend: `mvn verify`. SQL harness hanya pada database disposable. Jalankan browser/integrasi hosted secara terpisah dengan akun/environment aman bila memang termasuk scope.
 
-If Chromium is already installed, `PLAYWRIGHT_CHROME_PATH` can point to its executable. CI runs build/lint/unit and browser tests. Charts and routes load in separate chunks; the initial app bundle stays near 264 kB before gzip. No external font request or new dependency is added for the Depor theme.
+Checkpoint terakhir pada 10 Oktober mencatat 22 unit test + 17 browser flow mock frontend dan 56 tes Java. Validasi khusus dokumentasi memeriksa tautan, kontrak, contoh JSON dan sumber kode. CI aplikasi yang berjalan otomatis dicatat pada PR terkait. Data hosted tidak dimodifikasi.
 
-The authorized Free development project `dajpnhkutkhgxwkjzvpg` has both migrations applied and 17 active confirmed Auth accounts (4 BPH, 13 Staff) using `name@depor.com`. The two original test accounts, profiles, identities and sessions have been deleted. Original roster UUIDs/passwords are preserved. The user-supplied activity roster is now populated in development.
+## Pengembangan berikutnya
 
-Earlier backend evidence: **42 Java tests and 49 real Auth/Java/PostgREST checks** with the original test accounts covered CRUD, persistence, RLS, profile edits, refresh rotation and logout. This is historical evidence, not a retest of the current roster. See CODEX_HANDOFF.md and the [backend validation report](https://github.com/DeporCS-HUB/Backend-DeporCS-Hub/blob/main/docs/live-development-validation.md).
+Mulai dari [TASKS.md](TASKS.md). Referensi dashboard baru adalah arahan desain lanjutan, bukan klaim bahwa seluruh elemen gambar sudah menjadi fitur. Pertahankan layanan Free/$0 yang ada dan jangan menambah sumber daya berbayar.
 
-## Cloud startup
+## Panduan implementasi lanjutan
 
-- `render.yaml` defines a static build: `npm ci && npm run build`, publish `dist`, with SPA routes. Set public `VITE_API_URL` at build time and exact HTTPS CORS origins on the Java API. This file does not create a deployed service or install secrets.
-- For unrelated frontend/backend domains, the refresh cookie needs `APP_COOKIE_SECURE=true` and `APP_COOKIE_SAME_SITE=None`. Browser third-party-cookie policies can still block it; prefer a same-origin proxy or same-site custom domains.
-- The included Dockerfile runs Vite's build in a Node build stage, then serves static files with nginx. Set runtime `API_PROXY_TARGET` to the private **Java backend** origin, without a trailing slash, and `PORT` (default 8080). nginx forwards `/api` unchanged and serves SPA routes. Leave `VITE_API_URL` unset for this model. The backend should allow the public frontend origin and use secure cookies behind HTTPS.
-
-The Docker frontend uses Node only to compile React/Vite. All backend runtime and API business logic use Java.
-
-## Vercel hosting
-
-The repository is public and PR #1 is merged. vercel.json defines the Vite install/build/output and SPA rewrite. Set **VITE_API_URL to the real backend HTTPS origin plus /api** before the Vercel build; missing configuration fails the build. The SPA rewrite is not an API proxy. No Supabase key belongs in the frontend.
-
-Use only the existing Hobby/$0 account; do not provision paid resources. The frontend is https://depor-cs-hub-web.vercel.app and the backend is https://depor-cs-hub-api.vercel.app. Merge/deployment is user-authorized; deployment status is verified through GitHub/Vercel commit checks. Real hosted browser acceptance remains separate from mocked tests. Follow the [backend Vercel runbook](https://github.com/DeporCS-HUB/Backend-DeporCS-Hub/blob/main/docs/vercel-deployment.md) for CORS, secure refresh cookies and deployment verification.
+- [Checkpoint pengembangan](CODEX_HANDOFF.md)
+- [loading performance](/workspace/scratch/b6f97be7f072/DeporCS-Hub-UI/docs/loading-performance.md)
+- [program workspace](/workspace/scratch/b6f97be7f072/DeporCS-Hub-UI/docs/program-workspace.md)
