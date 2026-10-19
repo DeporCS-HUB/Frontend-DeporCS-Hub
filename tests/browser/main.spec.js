@@ -489,7 +489,7 @@ for(const width of [375,1440])test(`BPH task board tracks full totals, per-colum
 });
 test('mobile program workspace and agenda retain bounded content without overflow',async({page},testInfo)=>{
  await page.setViewportSize({width:375,height:812});const mock=await mockApi(page);mock.rows.programs.push({id:'mobile-unit',name:'A very long sports program name for the department',kind:'UKOR',status:'Ongoing',progress:null,description:'Long description '.repeat(100),assignee_ids:[user.id],pic:'Development Staff'});
- await login(page);await page.goto('/programs/mobile-unit');await expect(page.getByRole('heading',{level:1})).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:testInfo.outputPath('program-mobile.png'),fullPage:true});
+ await login(page);await page.goto('/programs/mobile-unit');await expect(page.getByRole('heading',{name:'A very long sports program name for the department',exact:true})).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:testInfo.outputPath('program-mobile.png'),fullPage:true});
  await page.getByRole('button',{name:'Agenda',exact:true}).click();await page.getByRole('button',{name:'Tambah agenda'}).click();await page.getByLabel('Judul agenda').fill('Pending date');await page.getByRole('button',{name:'Simpan',exact:true}).click();await expect(page.locator('.milestone-list')).toContainText('Pending date');expect(mock.milestones[0].due_date).toBe(null);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
