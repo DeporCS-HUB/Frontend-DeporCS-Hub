@@ -127,3 +127,9 @@ test('failed logout clears cached data and authentication endpoints always reach
  await assert.rejects(api.logout(), /Unavailable/); assert.equal(api.cachedResource('/tasks'), undefined);
  const before = calls; await api.api('/auth/session'); await api.api('/auth/session'); assert.equal(calls - before, 2);
 });
+
+test('cached lists retain pagination metadata independently for each filter', async () => {
+ const api=await fresh();globalThis.fetch=async url=>response({data:[{id:'a'}],meta:{page:0,size:1,hasMore:url.includes('UKOR')}});
+ await api.api('/programs?kind=UKOR');await api.api('/programs?kind=Proker');
+ assert.equal(api.cachedResponse('/programs?kind=UKOR').meta.hasMore,true);assert.equal(api.cachedResponse('/programs?kind=Proker').meta.hasMore,false);
+});

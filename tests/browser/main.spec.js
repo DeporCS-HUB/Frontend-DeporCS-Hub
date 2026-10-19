@@ -10,12 +10,12 @@ async function mockApi(page, role = 'staff') {
  await page.route('**/api/**', async route => {
   const req = route.request(); const url = new URL(req.url()); const path = url.pathname.replace('/api/', '');
   const key = req.method() + ' ' + path; counts[key] = (counts[key] || 0) + 1;
-  const reply = (data, status = 200) => route.fulfill({ status, json: status >= 400 ? { error: { message: data } } : { data } });
+  const reply = (data, status = 200, meta) => route.fulfill({ status, json: status >= 400 ? { error: { message: data } } : { data, meta } });
   if (path === 'auth/refresh') return signedIn ? reply({ accessToken: 'development-token', user: profile, expiresIn: 3600 }) : reply('Session expired', 401);
   if (path === 'auth/login') { signedIn = true; return reply({ accessToken: 'development-token', user: profile, expiresIn: 3600 }); }
   if (path === 'auth/logout') { signedIn = false; return reply({ loggedOut: true }); }
-  if (path === 'dashboard') return reply({ overview: {proker: rows.programs.filter(p=>p.kind==='Proker').length, ukor: rows.programs.filter(p=>p.kind==='UKOR').length, openTasks: rows.tasks.filter(t=>t.status!=='Done').length, overdueTasks:0}, programFocus: rows.programs, upcomingMilestones: rows.programs.filter(p=>p.milestone_date), attentionTasks: rows.tasks.filter(t=>t.status!=='Done'), staffPerformance: role==='member' ? [{id:profile.id,name:profile.name,programs:rows.programs.filter(p=>p.assignee_ids?.includes(profile.id)),assignedTasks:rows.tasks.filter(t=>t.assignee_id===profile.id).length,completedTasks:rows.tasks.filter(t=>t.assignee_id===profile.id&&t.status==='Done').length,reviewTasks:0,overdueTasks:0,updatesLast30Days:progressUpdates,lastUpdate:null}] : [], summary: {...summary,totalPrograms:rows.programs.length,completedPrograms:rows.programs.filter(p=>p.status==='Completed').length,completedTasks:rows.tasks.filter(t=>t.status==='Done').length,pendingTasks:rows.tasks.filter(t=>t.status!=='Done').length}, monthly: [{ month: 10, income: 0, expense: 0 }], inventory: [{ status: 'Available', quantity: 3 }], upcomingPrograms: [] });
-  if (path === 'profiles') return reply([profile,...extraProfiles]);
+  if (path === 'dashboard') return reply({ overview: {proker: rows.programs.filter(p=>p.kind==='Proker').length, ukor: rows.programs.filter(p=>p.kind==='UKOR').length, openTasks: rows.tasks.filter(t=>t.status!=='Done').length, overdueTasks:0}, programFocus: rows.programs.slice(0,30), programStatusCounts: Object.values(rows.programs.reduce((acc,p)=>{const key=p.kind+p.status;acc[key] ||= {kind:p.kind,status:p.status,count:0};acc[key].count++;return acc;},{})), upcomingMilestones: rows.programs.filter(p=>p.milestone_date), attentionTasks: rows.tasks.filter(t=>t.status!=='Done'), staffPerformance: role==='member' ? [{id:profile.id,name:profile.name,programs:rows.programs.filter(p=>p.assignee_ids?.includes(profile.id)),assignedTasks:rows.tasks.filter(t=>t.assignee_id===profile.id).length,completedTasks:rows.tasks.filter(t=>t.assignee_id===profile.id&&t.status==='Done').length,reviewTasks:0,overdueTasks:0,updatesLast30Days:progressUpdates,lastUpdate:null}] : [], summary: {...summary,recordedPrograms:rows.programs.filter(p=>p.progress!=null).length,totalPrograms:rows.programs.length,completedPrograms:rows.programs.filter(p=>p.status==='Completed').length,completedTasks:rows.tasks.filter(t=>t.status==='Done').length,pendingTasks:rows.tasks.filter(t=>t.status!=='Done').length}, monthly: [{ month: 10, income: 0, expense: 0 }], inventory: [{ status: 'Available', quantity: 3 }], upcomingPrograms: [] });
+
   if (path === 'profiles/me') {
    if (failProfile) return reply('Profile unavailable', 503);
    profile = { ...profile, name: req.postDataJSON().name }; return reply(profile);
@@ -23,7 +23,14 @@ async function mockApi(page, role = 'staff') {
   if (path.startsWith('events') && req.method() !== 'GET' && failEvent) return reply('Event unavailable',503);
   if (path.endsWith('/progress') && req.method()==='PUT') { if(failProgress) return reply('Progress unavailable',503); const id=path.split('/')[1]; const row=rows.programs.find(p=>p.id===id); if(role==='member'&&!row?.assignee_ids?.includes(profile.id)) return reply('Forbidden',403); Object.assign(row,req.postDataJSON());progressUpdates++;return reply(row); }
   const [resource, id] = path.split('/');
-  if (req.method() === 'GET') return reply(rows[resource] || []);
+  if (req.method() === 'GET') {
+   let records = resource === 'profiles' ? [profile,...extraProfiles] : rows[resource] || [];
+   const q = url.searchParams.get('q')?.toLowerCase();
+   if(q) records = records.filter(row => Object.values(row).some(v => typeof v === 'string' && v.toLowerCase().includes(q)));
+   for(const key of ['status','kind','priority','permit_status','type','departmentRole']) { const value=url.searchParams.get(key); if(value) records=records.filter(row=>row[key]===value); }
+   const size=Number(url.searchParams.get('size')||50), index=Number(url.searchParams.get('page')||0)*size;
+   return reply(records.slice(index,index+size),200,{hasMore:records.length>index+size});
+  }
   if (req.method() === 'PUT' && resource === 'tasks' && failTask) return reply('Database unavailable', 503);
   if (req.method() === 'POST') { const data = { ...req.postDataJSON(), id: `${resource}-id`, created_by: user.id };rows[resource].push(data);return reply(data,201); }
   if (req.method() === 'PUT') { const data = { ...rows[resource].find(row => row.id === id), ...req.postDataJSON() };rows[resource] = rows[resource].map(row => row.id === id ? data : row);return reply(data); }
@@ -149,11 +156,11 @@ test('BPH sees management controls and Team supports role filtering', async ({ p
  await page.getByRole('link', { name: 'Tim', exact: true }).click();
  await expect(page.getByRole('heading', { name: 'Tim Departemen' })).toBeVisible();
  await page.getByLabel('Filter role').selectOption('staff');
- await expect(page.getByText('Tidak ada anggota yang sesuai filter di halaman ini.')).toBeVisible();
+ await expect(page.getByText('Belum ada data.', {exact:true})).toBeVisible();
  await page.getByLabel('Filter role').selectOption('bph');
  await expect(page.locator('.member-list .badge')).toHaveText('BPH');
  await page.getByLabel('Cari anggota').fill('not-present');
- await expect(page.getByText('Tidak ada anggota yang sesuai filter di halaman ini.')).toBeVisible();
+ await expect(page.getByText('Belum ada data.', {exact:true})).toBeVisible();
 });
 test('Staff cannot operate another person\'s task and has no management controls', async ({ page }) => {
  const mock = await mockApi(page, 'member');
@@ -328,4 +335,36 @@ test('long program and task descriptions stay inside a bounded mobile detail dia
  await expect(page.getByText(description,{exact:true})).toHaveCount(0);
  await page.getByRole('button',{name:'Detail',exact:true}).click();await expect(page.getByRole('dialog').getByText(description,{exact:true})).toBeVisible();
  await page.keyboard.press('Escape');expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
+
+
+test('search finds records beyond 100, resets pages and keeps exact end pagination', async ({page}) => {
+ const mock=await mockApi(page);
+ for(let n=0;n<125;n++) mock.rows.programs.push({id:`p-${n}`,name:n===124?'Target 100%_* (a+)+$':'Activity '+n,kind:n%2?'UKOR':'Proker',status:'Planning',progress:null,pic:'Test'});
+ await login(page); await page.getByRole('link',{name:'Program',exact:true}).click();
+ await expect(page.locator('tbody tr')).toHaveCount(10);
+ await page.getByRole('button',{name:'Berikutnya'}).click();await expect(page.locator('.pagination')).toContainText('Halaman 2');
+ await page.getByLabel('Cari program').fill('Target 100%_* (a+)+$');
+ await expect(page.getByRole('cell',{name:'Target 100%_* (a+)+$'})).toBeVisible();
+ await expect(page.locator('.pagination')).toContainText('Halaman 1');await expect(page.getByRole('button',{name:'Berikutnya'})).toBeDisabled();
+ await page.getByLabel('Cari program').fill('');await page.getByLabel('Filter jenis kegiatan').selectOption('UKOR');
+ await expect(page.locator('tbody tr')).toHaveCount(10);await expect(page.locator('tbody')).not.toContainText('Proker');
+});
+
+for (const width of [375,768,1440]) test(`populated dashboard fits ${width}px with global metrics beyond preview`,async ({page},testInfo)=>{
+ await page.setViewportSize({width,height:900});const mock=await mockApi(page,'member');
+ for(let n=0;n<35;n++)mock.rows.programs.push({id:`c-${n}`,name:`Activity ${n}`,kind:n%2?'Proker':'UKOR',status:n===34?'Completed':'Ongoing',progress:n===34?100:null,assignee_ids:n===34?[user.id]:[]});
+ await login(page);await expect(page.locator('.kpi').filter({hasText:'Progres tercatat'})).toContainText('1 / 35');
+ await expect(page.getByLabel('Development Staff: 1 selesai',{exact:true})).toBeVisible();
+ const chart=page.getByRole('region',{name:'Data grafik kegiatan'});expect((await chart.boundingBox()).height).toBeLessThanOrEqual(320);await chart.focus();await expect(chart).toBeFocused();
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ await page.screenshot({path:testInfo.outputPath(`dashboard-${width}.png`),fullPage:true});
+});
+
+test('failed global search reports error, retains query and recovers on retry',async ({page})=>{
+ const mock=await mockApi(page);mock.rows.events.push({id:'e1',name:'Find venue',venue:'Court',status:'Planning',permit_status:'Pending'});
+ await login(page);await page.getByRole('link',{name:'Kegiatan',exact:true}).click();
+ await page.route('**/api/events?**',route=>route.fulfill({status:503,json:{error:{message:'Search unavailable'}}}));
+ await page.getByLabel('Cari kegiatan').fill('Court');await expect(page.getByRole('alert')).toContainText('Search unavailable');await expect(page.getByLabel('Cari kegiatan')).toHaveValue('Court');
+ await page.unroute('**/api/events?**');await page.getByRole('button',{name:'Coba kembali'}).click();await expect(page.getByRole('cell',{name:'Find venue'})).toBeVisible();
 });

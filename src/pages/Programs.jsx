@@ -8,12 +8,13 @@ import { useCollection } from '../lib/collections';
 import { useAuth, date } from '../lib/hooks';
 import { canUpdateProgram, programStatuses, programStatusLabel } from '../lib/programs';
 export default function Programs() {
- const c = useCollection('programs'); const { user } = useAuth();
+ const { user } = useAuth();
  const [query, setQuery] = useState(''); const [status, setStatus] = useState(''); const [kind, setKind] = useState('');
  const [progressItem, setProgressItem] = useState(null); const [detailItem, setDetailItem] = useState(null);
- const rows = c.rows.filter(row => row.name.toLowerCase().includes(query.toLowerCase()) && (!status || row.status === status) && (!kind || row.kind === kind));
+ const c = useCollection('programs', { q: query, status, kind }, 10);
+ const rows = c.rows;
  return <><PageTitle title="Program kerja" subtitle="Proker & UKOR" action={c.manages && <button className="primary" onClick={() => c.setEditor({})}><Plus />Tambah program</button>} />
- <Card><div className="table-tools"><div className="search"><Search /><input aria-label="Cari program" value={query} onChange={event => setQuery(event.target.value)} placeholder="Cari Proker atau UKOR…" /></div>
+ <Card><div className="table-tools"><div className="search"><Search /><input maxLength={120} aria-label="Cari program" value={query} onChange={event => setQuery(event.target.value)} placeholder="Cari Proker atau UKOR…" /></div>
  <select aria-label="Filter jenis kegiatan" value={kind} onChange={event => setKind(event.target.value)}><option value="">Proker &amp; UKOR</option><option>Proker</option><option>UKOR</option></select>
  <select aria-label="Filter status program" value={status} onChange={event => setStatus(event.target.value)}><option value="">Semua status</option>{programStatuses.map(value => <option key={value} value={value}>{programStatusLabel(value)}</option>)}</select></div>
  <CollectionFeedback collection={c} />{!c.loading && !c.error && c.rows.length > 0 && <div className="table-wrap"><table className="program-table"><thead><tr>{['Kegiatan','PJ','Progres','Agenda','Tindakan'].map(value => <th key={value}>{value}</th>)}</tr></thead><tbody>{rows.map(row => <tr key={row.id}>
