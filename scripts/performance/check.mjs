@@ -47,8 +47,8 @@ for(const route of ['/login','/','/tasks']){
  try{for(let run=1;run<=3;run++){
   const chrome=await launch({chromePath,chromeFlags:['--no-sandbox','--headless','--disable-dev-shm-usage']});
   try{
-   const {lhr}=await lighthouse(app.url+route,{port:chrome.port,output:'json',onlyCategories:['performance'],logLevel:'error'});
-   report.lighthouse.push({route,run,score:Math.round(lhr.categories.performance.score*100),lcpMs:lhr.audits['largest-contentful-paint'].numericValue,tbtMs:lhr.audits['total-blocking-time'].numericValue,cls:lhr.audits['cumulative-layout-shift'].numericValue});
+   const {lhr}=await lighthouse(app.url+route,{port:chrome.port,output:'json',onlyCategories:['performance','accessibility','best-practices','seo'],logLevel:'error'});
+   report.lighthouse.push({route,run,score:Math.round(lhr.categories.performance.score*100),accessibility:Math.round(lhr.categories.accessibility.score*100),bestPractices:Math.round(lhr.categories['best-practices'].score*100),seo:Math.round(lhr.categories.seo.score*100),headingOrder:lhr.audits['heading-order'].score,robots:lhr.audits['robots-txt'].score,lcpMs:lhr.audits['largest-contentful-paint'].numericValue,tbtMs:lhr.audits['total-blocking-time'].numericValue,cls:lhr.audits['cumulative-layout-shift'].numericValue});
   }finally{await chrome.kill();}
  }}finally{await app.close();}
 }
@@ -65,6 +65,11 @@ if(process.env.PERF_RECORD_ONLY!=='1'){
  assert.ok(median(report.navigation.filter(r=>r.route==='/tasks').map(r=>r.warmReturnMs))<=250,'Warm board return exceeds 250ms');
  for(const route of ['/login','/','/tasks']){
   const rows=report.lighthouse.filter(r=>r.route===route);
+  assert.ok(rows.every(r=>r.headingOrder===1),`${route} heading order fails accessibility audit`);
+  assert.ok(rows.every(r=>r.robots===1),`${route} robots.txt is invalid`);
+  assert.ok(median(rows.map(r=>r.accessibility))===100,`${route} accessibility below 100`);
+  assert.ok(median(rows.map(r=>r.bestPractices))>=95,`${route} Best Practices below 95`);
+  assert.ok(median(rows.map(r=>r.seo))===100,`${route} SEO below 100`);
   assert.ok(median(rows.map(r=>r.score))>=90,`${route} Lighthouse below 90`);
   assert.ok(median(rows.map(r=>r.lcpMs))<=2500,`${route} LCP exceeds 2.5s`);
   assert.ok(median(rows.map(r=>r.tbtMs))<=200,`${route} TBT exceeds 200ms`);

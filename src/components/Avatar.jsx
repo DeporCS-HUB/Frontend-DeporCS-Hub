@@ -8,10 +8,10 @@ export default function Avatar({ user, large = false, mini = false, url, alt = '
 function AvatarImage({ name, url, large, mini, alt = 'Foto profil', error }) {
  const [failed, setFailed] = useState('');
  return <span className={`avatar ${large ? 'avatar-large' : ''} ${mini ? 'avatar-mini' : ''}`} title={error || name} aria-label={url && failed !== url ? undefined : `Inisial ${name}`}>
-  {url && failed !== url ? <img src={url} alt={alt} referrerPolicy="no-referrer" loading="lazy" decoding="async" draggable={false} onError={() => setFailed(url)} /> : initials(name)}
+  {url && failed !== url ? <img src={url} width={large ? 112 : mini ? 29 : 30} height={large ? 112 : mini ? 29 : 30} alt={alt} referrerPolicy="no-referrer" loading="lazy" decoding="async" draggable={false} onError={() => setFailed(url)} /> : initials(name)}
  </span>;
 }
 function PrivateAvatar({ user, large }) {
- const source = useResource(`/profiles/me/avatar?version=${encodeURIComponent(user.avatar_path)}`);
+ const source = useResource(`/profiles/me/avatar?size=${large ? 192 : 96}&version=${encodeURIComponent(user.avatar_path)}`);
  return <AvatarImage name={user.name} url={source.data?.url} large={large} error={source.error} />;
 }

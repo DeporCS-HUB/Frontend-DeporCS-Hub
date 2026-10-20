@@ -26,7 +26,7 @@ h1 { font-size: clamp(24px,2.4vw,31px); font-weight: 600; letter-spacing: -.045e
 .dashboard-meta time { display: flex; align-items: center; gap: 7px; padding: 8px 11px; font-size: 10px; background: var(--surface); border-radius: 10px; }
 .badge { border: 0; border-radius: 6px; font-size: 10px; }
 .card { border: 1px solid var(--border); border-radius: 18px; padding: 20px; }
-.panel-title { margin-bottom: 14px; }.panel-title h3 { font-size: 13px; font-weight: 550; letter-spacing: -.02em; }.panel-title a { font-size: 10px; }
+.panel-title { margin-bottom: 14px; }.panel-title h2 { font-size: 13px; font-weight: 550; letter-spacing: -.02em; }.panel-title a { font-size: 10px; }
 .primary, .secondary, .danger { border-radius: 10px; font-size: 12px; }
 input, select, textarea { border-radius: 10px; }
 .dashboard-overview { display: grid; grid-template-columns: minmax(280px,.95fr) minmax(0,1.4fr); gap: 14px; align-items: stretch; }
@@ -78,7 +78,7 @@ thead { background: var(--surface-light); }th { font-size: 10px; text-transform:
 @media (max-width: 600px) {
  .topbar { padding-inline: 14px; }.page { padding: 14px 14px 28px; }.dashboard-heading { gap: 12px; align-items: flex-start; margin-bottom: 18px; }.dashboard-heading h1 { font-size: 25px; }.dashboard-heading p { font-size: 11px; max-width: 195px; }.dashboard-meta { flex-direction: column; align-items: flex-end; gap: 6px; }.dashboard-meta time { font-size: 10px; gap: 4px; padding: 5px 7px; }.dashboard-meta time svg { width: 11px; }
  .dashboard-overview { grid-template-columns: 1fr; gap: 12px; }.kpi-grid { gap: 10px; }.kpi { min-height: 124px; padding: 16px; border-radius: 16px; }.kpi small { font-size: 11px; }.kpi strong { font-size: 33px; margin-top: 22px; }.kpi-open { right: 12px; top: 12px; width: 25px; height: 25px; }
- .program-chart-card { min-height: 0; padding: 16px; }.program-chart-card .panel-title { padding-right: 107px; min-height: 28px; }.program-chart-card .panel-title h3 { max-width: 130px; font-size: 12px; }.program-chart-card .kind-tabs { top: 16px; right: 13px; }.program-chart-card .panel-title a { display: none; }.program-bars .program-chart-rows { gap: 10px; }.program-column .chart-track { width: min(100%,42px); }
+ .program-chart-card { min-height: 0; padding: 16px; }.program-chart-card .panel-title { padding-right: 107px; min-height: 28px; }.program-chart-card .panel-title h2 { max-width: 130px; font-size: 12px; }.program-chart-card .kind-tabs { top: 16px; right: 13px; }.program-chart-card .panel-title a { display: none; }.program-bars .program-chart-rows { gap: 10px; }.program-column .chart-track { width: min(100%,42px); }
  .dashboard-details { gap: 12px; margin-top: 12px; }.dashboard-details .card { padding: 17px; }.status-donut-layout { gap: 20px; }.status-donut { width: 145px; height: 145px; }.donut-legend { min-width: 110px; }
  .login-intro h1 { font-size: 32px; }.login-intro { gap: 22px; }.login-shell { gap: 24px; }.login-card { padding: 26px 22px; border-radius: 18px; }
 }
