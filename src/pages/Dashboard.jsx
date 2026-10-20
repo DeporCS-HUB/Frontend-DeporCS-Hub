@@ -7,7 +7,7 @@ import { useAuth, useResource } from '../lib/hooks';
 import { canManage, roleLabel } from '../lib/roles';
 import { ProgramChart, StaffChart, StatusChart } from '../components/KpiCharts';
 export default function Dashboard() {
- const result = useResource('/dashboard'); const { user } = useAuth(); const data = result.data;
+ const result = useResource('/dashboard/overview'); const { user } = useAuth(); const data = result.data;
  const [kind, setKind] = useState('Proker'); const [metric, setMetric] = useState('programs');
  const programs = data?.programFocus || []; const summary = data?.summary || {};
  const total = summary.totalPrograms ?? programs.length;

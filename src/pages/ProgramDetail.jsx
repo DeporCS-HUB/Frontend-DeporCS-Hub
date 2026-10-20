@@ -1,6 +1,6 @@
 import AvatarDirectory from '../components/AvatarDirectory';
 import AccountIdentity from '../components/AccountIdentity';
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, CalendarDays, Check, Plus, LockKeyhole, Pencil, ArrowRight, RefreshCw } from 'lucide-react';
 import { Badge, Card, Progress } from '../components/UI';
@@ -14,7 +14,7 @@ import { useCollection } from '../lib/collections';
 import { canManage } from '../lib/roles';
 import { programStatusLabel, programStatusGroup } from '../lib/programs';
 import { accountLabel } from '../lib/tasks';
-import Tasks from './Tasks';
+const Tasks = lazy(() => import('./Tasks'));
 function Timeline({ id, profiles }) {
  const [page, setPage] = useState(0); const result = useResource(`/programs/${id}/timeline?page=${page}&size=20`);
  const [body, setBody] = useState(''); const [busy, setBusy] = useState(false); const [error, setError] = useState(''); const [expanded, setExpanded] = useState(null);
@@ -40,7 +40,7 @@ export default function ProgramDetail() {
  <header className="program-hero"><div className="program-hero-main"><div className="eyebrow">RUANG KERJA / {p.kind || 'PROKER'}</div><h1>{p.name}</h1><div className="program-hero-meta"><Badge tone={`status-${programStatusGroup(p.status)}`}>{programStatusLabel(p.status)}</Badge><span><LockKeyhole size={14} />BPH & akun PJ</span>{(p.start_date || p.end_date) && <span><CalendarDays size={14} />{date(p.start_date)} — {date(p.end_date)}</span>}</div></div><div className="program-hero-actions"><button className="secondary" aria-label="Muat ulang program" title="Muat ulang program" onClick={refreshData}><RefreshCw size={16} /></button><button className="primary" onClick={() => setEditor('programProgress')}>Update progres</button>{manages && <button className="secondary" onClick={() => setEditor('programs')}><Pencil size={15} />Kelola program & PJ</button>}</div></header>
  <nav className="workspace-tabs" aria-label="Bagian program">{['Ringkasan', 'Tugas', 'Timeline', 'Agenda'].map(t => <button key={t} aria-current={tab === t ? 'page' : undefined} onClick={() => setTab(t)}>{t}</button>)}</nav>
  {tab === 'Ringkasan' && <Overview p={p} profiles={profiles.data || []} setDetail={setDetail} setTab={setTab} />}
- {tab === 'Tugas' && <Tasks key={id} programId={id} programAssignees={p.assignee_ids || []} />}
+ {tab === 'Tugas' && <Suspense fallback={<DataState loading />}><Tasks key={id} programId={id} programAssignees={p.assignee_ids || []} /></Suspense>}
  {tab === 'Timeline' && <Timeline id={id} profiles={profiles.data || []} />}
  {tab === 'Agenda' && <Agenda id={id} program={p} />}
  {profiles.error && <p className="error" role="alert">Daftar akun tidak tersedia. <button className="text-button" onClick={profiles.reload}>Coba lagi</button></p>}

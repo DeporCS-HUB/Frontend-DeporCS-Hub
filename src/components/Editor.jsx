@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { api, listAll } from '../lib/api';
+import { api } from '../lib/api';
 import { useAuth } from '../lib/hooks';
 import { canManage } from '../lib/roles';
 import { programStatuses, programStatusLabel } from '../lib/programs';
@@ -31,8 +31,8 @@ export default function Editor({ resource, item, onClose, onSaved, programId, pr
     const previous = document.activeElement; dialog.current?.focus();
     const sources = [...new Set(schemas[resource].filter(([name]) => name !== 'assignee_id' || canManage(user)).map(field => field[2] === 'profiles_multiple' ? 'profiles' : field[2]).filter(type => type === 'programs' || type === 'profiles'))];
     let active = true;
-    Promise.all(sources.map(async source => [source, await listAll(`/${source}`)]))
-      .then(entries => { if (active) setChoices(Object.fromEntries(entries)); })
+    (sources.length ? api('/directory') : Promise.resolve({ data: {} }))
+      .then(({ data }) => { if (active) setChoices(data); })
       .catch(failure => { if (active) setChoiceError(failure.message); });
     return () => { active = false; if (previous?.isConnected) previous.focus(); };
   }, [resource, user]);

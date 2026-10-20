@@ -1,0 +1,306 @@
+{
+  "environment": {
+    "profiles": 17,
+    "programs": 14,
+    "tasks": 100,
+    "apiDelayMs": 400,
+    "cpuSlowdown": 4,
+    "latencyMs": 150,
+    "downloadMbps": 1.6,
+    "runs": 3
+  },
+  "baselineFrontend": "f831074aa16e1d0ddc118b27dcee9d48ce1c379e",
+  "baselineBackend": "4f5c7ee90b086799060dccb347b6020d297241ff",
+  "before": {
+    "fixture": {
+      "profiles": 17,
+      "programs": 14,
+      "tasks": 100,
+      "apiDelayMs": 400,
+      "cpuSlowdown": 4,
+      "latencyMs": 150,
+      "downloadMbps": 1.6,
+      "runs": 3
+    },
+    "navigation": [
+      {
+        "route": "/",
+        "run": 1,
+        "readyMs": 2311,
+        "coldApiRequests": 2
+      },
+      {
+        "route": "/",
+        "run": 2,
+        "readyMs": 2343,
+        "coldApiRequests": 2
+      },
+      {
+        "route": "/",
+        "run": 3,
+        "readyMs": 2379,
+        "coldApiRequests": 2
+      },
+      {
+        "route": "/programs",
+        "run": 1,
+        "readyMs": 2296,
+        "coldApiRequests": 3
+      },
+      {
+        "route": "/programs",
+        "run": 2,
+        "readyMs": 2267,
+        "coldApiRequests": 3
+      },
+      {
+        "route": "/programs",
+        "run": 3,
+        "readyMs": 2261,
+        "coldApiRequests": 3
+      },
+      {
+        "route": "/tasks",
+        "run": 1,
+        "readyMs": 2748,
+        "coldApiRequests": 9,
+        "warmReturnMs": 109
+      },
+      {
+        "route": "/tasks",
+        "run": 2,
+        "readyMs": 2719,
+        "coldApiRequests": 9,
+        "warmReturnMs": 118
+      },
+      {
+        "route": "/tasks",
+        "run": 3,
+        "readyMs": 2763,
+        "coldApiRequests": 9,
+        "warmReturnMs": 121
+      }
+    ],
+    "lighthouse": [
+      {
+        "route": "/login",
+        "run": 1,
+        "score": 100,
+        "lcpMs": 1517.416,
+        "tbtMs": 0,
+        "cls": 0.024417999397748608
+      },
+      {
+        "route": "/login",
+        "run": 2,
+        "score": 100,
+        "lcpMs": 1520.046,
+        "tbtMs": 0,
+        "cls": 0.024417999397748608
+      },
+      {
+        "route": "/login",
+        "run": 3,
+        "score": 100,
+        "lcpMs": 1521.672,
+        "tbtMs": 0,
+        "cls": 0.024417999397748608
+      },
+      {
+        "route": "/",
+        "run": 1,
+        "score": 100,
+        "lcpMs": 1516.504,
+        "tbtMs": 0,
+        "cls": 0
+      },
+      {
+        "route": "/",
+        "run": 2,
+        "score": 100,
+        "lcpMs": 1517.233,
+        "tbtMs": 0,
+        "cls": 0
+      },
+      {
+        "route": "/",
+        "run": 3,
+        "score": 100,
+        "lcpMs": 1518.884,
+        "tbtMs": 0,
+        "cls": 0
+      },
+      {
+        "route": "/tasks",
+        "run": 1,
+        "score": 100,
+        "lcpMs": 1518.428,
+        "tbtMs": 7.5,
+        "cls": 0
+      },
+      {
+        "route": "/tasks",
+        "run": 2,
+        "score": 100,
+        "lcpMs": 1522.913,
+        "tbtMs": 5.5,
+        "cls": 0
+      },
+      {
+        "route": "/tasks",
+        "run": 3,
+        "score": 100,
+        "lcpMs": 1519.367,
+        "tbtMs": 0,
+        "cls": 0
+      }
+    ],
+    "initialJsGzipBytes": 89467
+  },
+  "after": {
+    "fixture": {
+      "profiles": 17,
+      "programs": 14,
+      "tasks": 100,
+      "apiDelayMs": 400,
+      "cpuSlowdown": 4,
+      "latencyMs": 150,
+      "downloadMbps": 1.6,
+      "runs": 3
+    },
+    "navigation": [
+      {
+        "route": "/",
+        "run": 1,
+        "readyMs": 2276,
+        "coldApiRequests": 2
+      },
+      {
+        "route": "/",
+        "run": 2,
+        "readyMs": 2274,
+        "coldApiRequests": 2
+      },
+      {
+        "route": "/",
+        "run": 3,
+        "readyMs": 2300,
+        "coldApiRequests": 2
+      },
+      {
+        "route": "/programs",
+        "run": 1,
+        "readyMs": 2196,
+        "coldApiRequests": 3
+      },
+      {
+        "route": "/programs",
+        "run": 2,
+        "readyMs": 2224,
+        "coldApiRequests": 3
+      },
+      {
+        "route": "/programs",
+        "run": 3,
+        "readyMs": 2141,
+        "coldApiRequests": 3
+      },
+      {
+        "route": "/tasks",
+        "run": 1,
+        "readyMs": 2112,
+        "coldApiRequests": 3,
+        "warmReturnMs": 105
+      },
+      {
+        "route": "/tasks",
+        "run": 2,
+        "readyMs": 2160,
+        "coldApiRequests": 3,
+        "warmReturnMs": 134
+      },
+      {
+        "route": "/tasks",
+        "run": 3,
+        "readyMs": 2265,
+        "coldApiRequests": 3,
+        "warmReturnMs": 265
+      }
+    ],
+    "lighthouse": [
+      {
+        "route": "/login",
+        "run": 1,
+        "score": 100,
+        "lcpMs": 1375.872,
+        "tbtMs": 0,
+        "cls": 0.024417999397748608
+      },
+      {
+        "route": "/login",
+        "run": 2,
+        "score": 100,
+        "lcpMs": 1365.499,
+        "tbtMs": 0,
+        "cls": 0.024417999397748608
+      },
+      {
+        "route": "/login",
+        "run": 3,
+        "score": 100,
+        "lcpMs": 1366.345,
+        "tbtMs": 0,
+        "cls": 0.024417999397748608
+      },
+      {
+        "route": "/",
+        "run": 1,
+        "score": 99,
+        "lcpMs": 1683.42,
+        "tbtMs": 3,
+        "cls": 0
+      },
+      {
+        "route": "/",
+        "run": 2,
+        "score": 99,
+        "lcpMs": 1689.4160000000002,
+        "tbtMs": 0,
+        "cls": 0
+      },
+      {
+        "route": "/",
+        "run": 3,
+        "score": 99,
+        "lcpMs": 1684.356,
+        "tbtMs": 0,
+        "cls": 0
+      },
+      {
+        "route": "/tasks",
+        "run": 1,
+        "score": 98,
+        "lcpMs": 1992.4650000000001,
+        "tbtMs": 9,
+        "cls": 0
+      },
+      {
+        "route": "/tasks",
+        "run": 2,
+        "score": 98,
+        "lcpMs": 1995.7775,
+        "tbtMs": 5.5,
+        "cls": 0
+      },
+      {
+        "route": "/tasks",
+        "run": 3,
+        "score": 99,
+        "lcpMs": 1990.4675,
+        "tbtMs": 25.5,
+        "cls": 0
+      }
+    ],
+    "initialJsGzipBytes": 85497
+  }
+}

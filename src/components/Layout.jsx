@@ -7,6 +7,7 @@ import { CalendarDays, ChevronLeft, ClipboardList, FolderKanban, LayoutDashboard
 
 import DataState from './DataState';
 import Avatar from './Avatar';
+import { preloadRoute } from '../lib/routes';
 
 const navigationItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -29,8 +30,8 @@ export default function Layout(){
  return <div className="app-shell"><a className="skip-link" href="#page-content">Lewati navigasi</a>
   <aside id="main-navigation" className={sidebarClassName}>
    <div className="brand"><span className="brand-mark" aria-hidden="true">D</span><div><b>DEPOR</b><small>BEM FASILKOM UI</small></div></div>
-   <nav aria-label="Menu utama">{navigationItems.map(({to,label,icon: Icon})=><NavLink key={to} to={to} end={to === '/'} aria-label={label} title={label} onClick={closeMobileMenu}><Icon size={19}/><span>{label}</span></NavLink>)}</nav>
-   <div className="sidebar-bottom"><NavLink to="/settings" aria-label="Pengaturan" title="Pengaturan" onClick={closeMobileMenu}><Settings size={19}/><span>Pengaturan</span></NavLink><button className="collapse-btn" type="button" onClick={()=>setIsSidebarCollapsed((isCollapsed)=>!isCollapsed)} aria-label={isSidebarCollapsed ? "Perluas navigasi" : "Ringkas navigasi"} aria-expanded={!isSidebarCollapsed}><ChevronLeft size={18}/></button></div>
+   <nav aria-label="Menu utama">{navigationItems.map(({to,label,icon: Icon})=><NavLink key={to} to={to} end={to === '/'} aria-label={label} title={label} onPointerEnter={() => preloadRoute(to)} onFocus={() => preloadRoute(to)} onClick={closeMobileMenu}><Icon size={19}/><span>{label}</span></NavLink>)}</nav>
+   <div className="sidebar-bottom"><NavLink to="/settings" aria-label="Pengaturan" title="Pengaturan" onPointerEnter={() => preloadRoute('/settings')} onFocus={() => preloadRoute('/settings')} onClick={closeMobileMenu}><Settings size={19}/><span>Pengaturan</span></NavLink><button className="collapse-btn" type="button" onClick={()=>setIsSidebarCollapsed((isCollapsed)=>!isCollapsed)} aria-label={isSidebarCollapsed ? "Perluas navigasi" : "Ringkas navigasi"} aria-expanded={!isSidebarCollapsed}><ChevronLeft size={18}/></button></div>
   </aside>
   {isMobileMenuOpen&&<button className="scrim" type="button" onClick={closeMobileMenu} aria-label="Tutup navigasi"/>}
   <main className="main">
