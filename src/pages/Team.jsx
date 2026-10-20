@@ -1,3 +1,5 @@
+import AvatarDirectory from '../components/AvatarDirectory';
+import AccountIdentity from '../components/AccountIdentity';
 import { useState } from 'react';
 import { Search } from 'lucide-react';
 import { PageTitle, Card, Badge } from '../components/UI';
@@ -12,7 +14,7 @@ export default function Team() {
   const result = useCollection('profiles', { q: query, departmentRole: role });
   const rows = result.rows;
   const profiles = rows;
-  return <>
+  return <AvatarDirectory profiles={profiles}>
     <PageTitle title="Tim Departemen" subtitle="BPH mengelola kegiatan; Staff menjalankan tugas pelaksanaan." />
     <Card>
       <div className="table-tools">
@@ -23,12 +25,12 @@ export default function Team() {
       </div>
       <DataState loading={result.loading} error={result.error} empty={profiles.length === 0} retry={result.reload} />
       {!result.loading && !result.error && <div className="member-list">{rows.map(member => <div key={member.id}>
-        <span className="avatar" aria-hidden="true">{member.name.slice(0,2).toUpperCase()}</span>
+        <AccountIdentity profiles={profiles} id={member.id} name={member.name} photoOnly />
         <p><b>{member.name}</b><small>{departmentRole(member) === 'bph' ? 'Pengelola departemen' : departmentRole(member) === 'staff' ? 'Pelaksana kegiatan' : 'Akses belum dikenali'}</small></p>
         <Badge tone={departmentRole(member) === 'bph' ? 'cyan' : 'green'}>{roleLabel(member)}</Badge>
       </div>)}</div>}
       {!result.loading && !result.error && profiles.length > 0 && !rows.length && <p className="data-state">Tidak ada anggota yang sesuai filter di halaman ini.</p>}
       <Pagination collection={result} />
     </Card>
-  </>;
+  </AvatarDirectory>;
 }

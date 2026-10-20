@@ -7,6 +7,7 @@ async function mockApi(page, role = 'staff') {
  let failEvent = false; let failProfile = false; let failPhoto = false; let failPassword = false;
  const rows = { events: [], programs: [], finances: [], inventory: [], tasks: [{ id: 'task-id', title: 'Review proposal', description: '', status: 'To Do', priority: 'Medium', program_id: null, assignee_id: user.id, due_date: null, created_by: user.id }] };
  const notes = []; const milestones = []; const timeline = [];
+ let failAvatarDirectory = false;
  let failTask = false; let failProgress = false; let progressUpdates = 0;
  await page.route('**/api/**', async route => {
   const req = route.request(); const url = new URL(req.url()); const path = url.pathname.replace('/api/', '');
@@ -46,6 +47,11 @@ async function mockApi(page, role = 'staff') {
     if(req.method()==='DELETE'){milestones.splice(milestones.indexOf(m),1);return reply({deleted:true});}
    }
   }
+  if(path==='profiles/avatars') {
+   if(failAvatarDirectory)return reply('Foto tim belum dapat dimuat.',503);
+   const ids=(url.searchParams.get('ids')||'').split(',');
+   return reply(Object.fromEntries([profile,...extraProfiles].filter(p=>p.avatar_path && ids.includes(p.id)).map(p=>[p.id,{path:p.avatar_path,url:p.testPhotoUrl||'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jDk0AAAAASUVORK5CYII='}])));
+  }
   if(path==='auth/password') {
    if(failPassword || req.postDataJSON().currentPassword!=='old-test-password')return reply('Password saat ini tidak sesuai.',400);
    return reply({accessToken:'new-test-session',expiresIn:3600,user:profile,passwordChanged:true});
@@ -76,7 +82,7 @@ async function mockApi(page, role = 'staff') {
   if (req.method() === 'DELETE') { rows[resource] = rows[resource].filter(row => row.id !== id);return reply({ deleted: true }); }
   return reply('Not found',404);
  });
- return { failPhoto(){failPhoto=true;}, failPassword(){failPassword=true;}, failEvent() { failEvent = true; }, failProfile() { failProfile = true; }, failTask() { failTask = true; }, failProgress() { failProgress=true; }, profiles:extraProfiles, rows, counts, notes, milestones, timeline };
+ return { failAvatarDirectory(){failAvatarDirectory=true;}, failPhoto(){failPhoto=true;}, failPassword(){failPassword=true;}, failEvent() { failEvent = true; }, failProfile() { failProfile = true; }, failTask() { failTask = true; }, failProgress() { failProgress=true; }, profiles:extraProfiles, rows, counts, notes, milestones, timeline };
 }
 async function login(page) {
  await page.goto('/'); await expect(page).toHaveURL(/login/);
@@ -527,4 +533,55 @@ test('program status uses three main choices and On Going finds legacy Active',a
  const mock=await mockApi(page);mock.rows.programs.push({id:'legacy-active',name:'Legacy active program',status:'Active',kind:'UKOR',pic:'Development Staff',assignee_ids:[user.id],progress:20});await login(page);await page.goto('/programs');
  await page.getByLabel('Filter status program').selectOption('Ongoing');await expect(page.getByRole('cell',{name:'Legacy active program'})).toBeVisible();await expect(page.locator('tbody .badge.status-running')).toHaveText('On Going');
  await page.getByRole('button',{name:'Edit',exact:true}).click();await expect(page.getByLabel('Status',{exact:true}).locator('option')).toHaveText(['Planning','On Going','Finished']);await expect(page.getByLabel('Status',{exact:true})).toHaveValue('Ongoing');await page.getByLabel('Status',{exact:true}).selectOption('Completed');await page.getByRole('button',{name:'Simpan',exact:true}).click();await page.getByLabel('Filter status program').selectOption('Completed');await expect(page.locator('tbody .badge.status-done')).toHaveText('Finished');
+});
+
+const teammateId='00000000-0000-0000-0000-000000000002';
+function seedTeamPhoto(mock) {
+ mock.profiles.push({id:teammateId,name:'Photo Teammate',role:'member',departmentRole:'staff',active:true,avatar_path:`${teammateId}/00000000-0000-0000-0000-000000000010.jpg`});
+ mock.rows.programs.push({id:'photo-program',name:'Photo program',kind:'Proker',status:'Ongoing',progress:20,pic:'Old name must not be used',assignee_ids:[teammateId,user.id]});
+ mock.rows.tasks.push({id:'photo-task',title:'Task with teammate',status:'To Do',priority:'Medium',assignee_id:teammateId,created_by:user.id,program_id:'photo-program'});
+}
+for(const width of [375,1440])test(`team photos identify program PJ and board/list assignment at ${width}px`,async({page},testInfo)=>{
+ await page.setViewportSize({width,height:1000});const mock=await mockApi(page);seedTeamPhoto(mock);await login(page);
+ await page.goto('/team');const member=page.locator('.member-list>div').filter({hasText:'Photo Teammate'});
+ await expect(member.getByRole('img',{name:'Foto profil Photo Teammate',exact:true})).toBeVisible();await expect(member).toContainText('Photo Teammate');
+ await page.goto('/programs');const program=page.locator('tbody tr').filter({hasText:'Photo program'});
+ await expect(program.getByRole('img',{name:'Foto profil Photo Teammate',exact:true})).toBeVisible();await expect(program).not.toContainText('Old name');
+ await program.getByRole('link',{name:'Buka program'}).click();const owners=page.locator('.program-members');
+ await expect(owners.getByRole('img',{name:'Foto profil Photo Teammate',exact:true})).toBeVisible();await expect(owners).toContainText('Development Staff');
+ const requestsBeforeTasks=mock.counts['GET profiles/avatars']||0;await page.goto('/tasks');const task=page.locator('.work-task').filter({hasText:'Task with teammate'});
+ await expect(task.getByRole('img',{name:'Foto profil Photo Teammate',exact:true})).toBeVisible();await expect(task).toContainText('Photo Teammate');
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:testInfo.outputPath(`team-assignment-${width}.png`),fullPage:true});
+ await page.getByRole('button',{name:'Daftar',exact:true}).click();const row=page.locator('tbody tr').filter({hasText:'Task with teammate'});
+ await expect(row.getByRole('img',{name:'Foto profil Photo Teammate',exact:true})).toBeVisible();await row.getByRole('button',{name:'Detail',exact:true}).click();
+ await expect(page.getByRole('dialog').getByRole('img',{name:'Foto profil Photo Teammate',exact:true})).toBeVisible();
+ expect(mock.counts['GET profiles/avatars']).toBe(requestsBeforeTasks+1);expect(mock.counts['GET profiles/me/avatar']).toBeUndefined();
+});
+test('Staff can read teammate photos without management controls and broken photos retain names',async({page})=>{
+ const mock=await mockApi(page,'member');seedTeamPhoto(mock);mock.profiles[0].testPhotoUrl='data:image/png;base64,broken';await login(page);await page.goto('/team');
+ const member=page.locator('.member-list>div').filter({hasText:'Photo Teammate'});await expect(member.locator('.avatar')).toHaveText('PT');await expect(member.getByRole('img')).toHaveCount(0);await expect(member).toContainText('Photo Teammate');await expect(page.getByRole('button',{name:'Edit',exact:true})).toHaveCount(0);
+});
+test('photo service failure does not block team, program or task data and refresh recovers',async({page})=>{
+ const mock=await mockApi(page);seedTeamPhoto(mock);mock.failAvatarDirectory();await login(page);await page.goto('/tasks');
+ const task=page.locator('.work-task').filter({hasText:'Task with teammate'});await expect(task).toContainText('Photo Teammate');await expect(task.locator('.avatar')).toHaveText('PT');await expect(task.getByRole('button',{name:'Edit',exact:true})).toBeEnabled();
+ mock.profiles[0].avatar_path=null;await page.getByRole('button',{name:'Muat ulang tugas'}).click();await expect(task).toContainText('Photo Teammate');await expect(task.getByRole('img')).toHaveCount(0);
+});
+test('replaced and removed photos refresh by current account pointer without stale directory images',async({page})=>{
+ const mock=await mockApi(page);seedTeamPhoto(mock);await login(page);await page.goto('/tasks');const task=page.locator('.work-task').filter({hasText:'Task with teammate'});
+ await expect(task.getByRole('img',{name:'Foto profil Photo Teammate',exact:true})).toBeVisible();mock.profiles[0].avatar_path=null;mock.profiles[0].name='Updated teammate';
+ await page.getByRole('button',{name:'Muat ulang tugas'}).click();await expect(task).toContainText('Updated teammate');await expect(task.getByRole('img')).toHaveCount(0);await expect(task.locator('.avatar')).toHaveText('UT');
+ mock.profiles[0].avatar_path=`${teammateId}/00000000-0000-0000-0000-000000000011.jpg`;await page.getByRole('button',{name:'Muat ulang tugas'}).click();await expect(task.getByRole('img',{name:'Foto profil Updated teammate',exact:true})).toBeVisible();
+});
+
+test('directory signed URLs refresh before expiry without reloading tasks',async({page})=>{
+ await page.clock.install();const mock=await mockApi(page);seedTeamPhoto(mock);await login(page);await page.goto('/tasks');
+ await expect(page.locator('.work-task').getByRole('img',{name:'Foto profil Photo Teammate',exact:true})).toBeVisible();expect(mock.counts['GET profiles/avatars']).toBe(1);
+ await page.clock.fastForward(12*60*1000);await expect.poll(()=>mock.counts['GET profiles/avatars']).toBe(2);await expect(page.getByRole('heading',{name:'Task with teammate',exact:true})).toBeVisible();
+});
+
+test('program directory failure retains program and retries account identities',async({page})=>{
+ const mock=await mockApi(page);seedTeamPhoto(mock);let unavailable=true;
+ await page.route(url=>url.pathname==='/api/profiles',route=>unavailable?route.fulfill({status:503,json:{error:{message:'Profile directory unavailable'}}}):route.fallback());
+ await login(page);await page.goto('/programs/photo-program');await expect(page.getByRole('heading',{name:'Photo program',exact:true})).toBeVisible();await expect(page.getByRole('alert')).toContainText('Daftar akun tidak tersedia');
+ unavailable=false;await page.getByRole('button',{name:'Coba lagi',exact:true}).click();await expect(page.locator('.program-members')).toContainText('Photo Teammate');await expect(page.locator('.program-members').getByRole('img',{name:'Foto profil Photo Teammate',exact:true})).toBeVisible();await expect(page.getByRole('alert')).toHaveCount(0);
 });

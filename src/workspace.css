@@ -152,3 +152,8 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px
 @media(max-width:900px){.account-settings{grid-template-columns:230px minmax(0,1fr)}.account-settings .card{padding:20px}.password-fields{grid-template-columns:1fr;gap:0}.settings-form-footer{align-items:flex-start;flex-direction:column}}
 @media(max-width:650px){.account-settings{grid-template-columns:1fr}.photo-settings{max-width:none}.photo-file-label,.photo-save-actions{max-width:280px}.settings-form-footer>.primary{width:100%;justify-content:center}.account-settings .card{padding:22px}}
 .top-actions .avatar{display:grid}
+
+/* Names remain visible beside photos, including multi-PJ programs and task lists. */
+.avatar.avatar-mini{width:29px;height:29px;border:1px solid var(--border);background:var(--navy);color:var(--blue-light);font-size:10px}
+.program-pj-list{display:flex;flex-direction:column;gap:7px;min-width:0;max-width:200px}.program-pj-list .account-chip>span:last-child{white-space:normal;overflow-wrap:anywhere}
+.member-list .avatar-mini{width:38px;height:38px;font-size:12px}.task-list-view .account-chip{max-width:210px}.workload-grid .avatar{flex-shrink:0}

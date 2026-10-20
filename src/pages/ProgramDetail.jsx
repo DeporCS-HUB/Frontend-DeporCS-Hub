@@ -1,3 +1,5 @@
+import AvatarDirectory from '../components/AvatarDirectory';
+import AccountIdentity from '../components/AccountIdentity';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, CalendarDays, Check, Plus, LockKeyhole, Pencil, ArrowRight, RefreshCw } from 'lucide-react';
@@ -7,11 +9,11 @@ import Editor from '../components/Editor';
 import DetailsDialog from '../components/DetailsDialog';
 import { CollectionFeedback, Pagination } from '../components/CollectionTools';
 import { api, refreshData } from '../lib/api';
-import { useAuth, useResource, date, money } from '../lib/hooks';
+import { useAuth, useResource, useDirectory, date, money } from '../lib/hooks';
 import { useCollection } from '../lib/collections';
 import { canManage } from '../lib/roles';
 import { programStatusLabel, programStatusGroup } from '../lib/programs';
-import { accountLabel, initials } from '../lib/tasks';
+import { accountLabel } from '../lib/tasks';
 import Tasks from './Tasks';
 function Timeline({ id, profiles }) {
  const [page, setPage] = useState(0); const result = useResource(`/programs/${id}/timeline?page=${page}&size=20`);
@@ -31,10 +33,10 @@ function Agenda({ id, program }) {
 }
 export default function ProgramDetail() {
  const { id } = useParams(); const { user } = useAuth(); const manages = canManage(user);
- const result = useResource(`/programs/${id}`); const profiles = useResource('/profiles?size=100&page=0');
+ const result = useResource(`/programs/${id}`); const profiles = useDirectory('profiles');
  const [tab, setTab] = useState('Ringkasan'); const [editor, setEditor] = useState(null); const [detail, setDetail] = useState(false);
  const p = result.data;
- return <div className="program-workspace"><Link className="back-link" to="/programs"><ArrowLeft size={16} />Semua program</Link><DataState loading={result.loading} error={result.error} empty={!p} retry={result.reload} />{!result.loading && !result.error && p && <>
+ return <AvatarDirectory profiles={profiles.data || []}><div className="program-workspace"><Link className="back-link" to="/programs"><ArrowLeft size={16} />Semua program</Link><DataState loading={result.loading} error={result.error} empty={!p} retry={result.reload} />{!result.loading && !result.error && p && <>
  <header className="program-hero"><div className="program-hero-main"><div className="eyebrow">RUANG KERJA / {p.kind || 'PROKER'}</div><h1>{p.name}</h1><div className="program-hero-meta"><Badge tone={`status-${programStatusGroup(p.status)}`}>{programStatusLabel(p.status)}</Badge><span><LockKeyhole size={14} />BPH & akun PJ</span>{(p.start_date || p.end_date) && <span><CalendarDays size={14} />{date(p.start_date)} — {date(p.end_date)}</span>}</div></div><div className="program-hero-actions"><button className="secondary" aria-label="Muat ulang program" title="Muat ulang program" onClick={refreshData}><RefreshCw size={16} /></button><button className="primary" onClick={() => setEditor('programProgress')}>Update progres</button>{manages && <button className="secondary" onClick={() => setEditor('programs')}><Pencil size={15} />Kelola program & PJ</button>}</div></header>
  <nav className="workspace-tabs" aria-label="Bagian program">{['Ringkasan', 'Tugas', 'Timeline', 'Agenda'].map(t => <button key={t} aria-current={tab === t ? 'page' : undefined} onClick={() => setTab(t)}>{t}</button>)}</nav>
  {tab === 'Ringkasan' && <Overview p={p} profiles={profiles.data || []} setDetail={setDetail} setTab={setTab} />}
@@ -42,7 +44,7 @@ export default function ProgramDetail() {
  {tab === 'Timeline' && <Timeline id={id} profiles={profiles.data || []} />}
  {tab === 'Agenda' && <Agenda id={id} program={p} />}
  {profiles.error && <p className="error" role="alert">Daftar akun tidak tersedia. <button className="text-button" onClick={profiles.reload}>Coba lagi</button></p>}
- {editor && <Editor resource={editor} item={p} onClose={() => setEditor(null)} onSaved={() => setEditor(null)} />}{detail && <DetailsDialog program item={p} onClose={() => setDetail(false)} />}</>}</div>;
+ {editor && <Editor resource={editor} item={p} onClose={() => setEditor(null)} onSaved={() => setEditor(null)} />}{detail && <DetailsDialog program item={p} onClose={() => setDetail(false)} />}</>}</div></AvatarDirectory>;
 }
 function Overview({ p, profiles, setDetail, setTab }) {
  const stats = useResource(`/tasks/summary?program_id=${p.id}`); const s = stats.data;
@@ -51,5 +53,5 @@ function Overview({ p, profiles, setDetail, setTab }) {
  return <div className="program-overview"><div className="program-main-column"><Card className="program-progress-card"><div className="section-heading"><h2>Progres program</h2><strong>{p.progress == null ? 'Belum diisi' : `${p.progress}%`}</strong></div>{p.progress != null && <Progress value={p.progress} status={p.status} />}{p.progress_notes ? <><p className="clamp-text">{p.progress_notes}</p><button className="text-button" onClick={() => setDetail(true)}>Baca catatan lengkap</button></> : <p className="muted">Belum ada catatan progres.</p>}<button className="program-context-link" onClick={() => setTab('Timeline')}>Lihat riwayat pembaruan <ArrowRight size={15} /></button></Card>
  <div className="program-task-stats">{[['Terbuka', s ? s.total - s.done : null], ['Dalam review', s?.statuses?.Review ?? (s ? 0 : null)], ['Terlambat', s?.overdue], ['Selesai', s?.done]].map(([label, value]) => <button className="card" key={label} onClick={() => setTab('Tugas')}><small>{label}</small><strong>{stats.loading ? '…' : value ?? '—'}</strong></button>)}</div>{stats.error && <p className="error" role="alert">{stats.error} <button onClick={stats.reload}>Coba lagi</button></p>}
  <Card className="program-about"><h2>Tentang program</h2><p className="clamp-text">{p.description || 'Deskripsi belum diisi.'}</p><button className="secondary" onClick={() => setDetail(true)}>Detail program</button></Card></div>
- <aside className="program-side-column"><Card><h2>Penanggung jawab</h2><div className="program-members">{(p.assignee_ids || []).map(id => <div key={id}><span className="avatar-mini">{initials(accountLabel(profiles, id))}</span><span><b>{accountLabel(profiles, id)}</b><small>Akun PJ</small></span></div>)}{!p.assignee_ids?.length && <p className="muted">Belum ada akun PJ. BPH dapat menetapkannya.</p>}</div></Card><Card><h2>Agenda berikutnya</h2><p className="clamp-text">{agenda.loading ? 'Memuat agenda…' : nextTitle || 'Belum ditetapkan.'}</p>{nextDate && <span className="agenda-date"><CalendarDays size={16} />{date(nextDate)}</span>}<button className="program-context-link" onClick={() => setTab('Agenda')}>Kelola agenda <ArrowRight size={15} /></button></Card>{p.budget != null && <Card><h2>Anggaran program</h2><strong className="program-budget">{money(p.budget)}</strong></Card>}</aside></div>;
+ <aside className="program-side-column"><Card><h2>Penanggung jawab</h2><div className="program-members">{(p.assignee_ids || []).map(id => <div key={id}><AccountIdentity profiles={profiles} id={id} photoOnly /><span><b>{accountLabel(profiles, id)}</b><small>Akun PJ</small></span></div>)}{!p.assignee_ids?.length && <p className="muted">Belum ada akun PJ. BPH dapat menetapkannya.</p>}</div></Card><Card><h2>Agenda berikutnya</h2><p className="clamp-text">{agenda.loading ? 'Memuat agenda…' : nextTitle || 'Belum ditetapkan.'}</p>{nextDate && <span className="agenda-date"><CalendarDays size={16} />{date(nextDate)}</span>}<button className="program-context-link" onClick={() => setTab('Agenda')}>Kelola agenda <ArrowRight size={15} /></button></Card>{p.budget != null && <Card><h2>Anggaran program</h2><strong className="program-budget">{money(p.budget)}</strong></Card>}</aside></div>;
 }
