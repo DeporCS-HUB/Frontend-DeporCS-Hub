@@ -16,7 +16,7 @@ async function mockApi(page, role = 'staff') {
   if (path === 'auth/refresh') return signedIn ? reply({ accessToken: 'development-token', user: profile, expiresIn: 3600 }) : reply('Session expired', 401);
   if (path === 'auth/login') { signedIn = true; return reply({ accessToken: 'development-token', user: profile, expiresIn: 3600 }); }
   if (path === 'auth/logout') { signedIn = false; return reply({ loggedOut: true }); }
-  if (path === 'dashboard') return reply({ overview: {proker: rows.programs.filter(p=>p.kind==='Proker').length, ukor: rows.programs.filter(p=>p.kind==='UKOR').length, openTasks: rows.tasks.filter(t=>t.status!=='Done').length, overdueTasks:0}, programFocus: rows.programs.slice(0,30), programStatusCounts: Object.values(rows.programs.reduce((acc,p)=>{const key=p.kind+p.status;acc[key] ||= {kind:p.kind,status:p.status,count:0};acc[key].count++;return acc;},{})), upcomingMilestones: rows.programs.filter(p=>p.milestone_date), attentionTasks: rows.tasks.filter(t=>t.status!=='Done'), staffPerformance: role==='member' ? [{id:profile.id,name:profile.name,programs:rows.programs.filter(p=>p.assignee_ids?.includes(profile.id)),assignedTasks:rows.tasks.filter(t=>t.assignee_id===profile.id).length,completedTasks:rows.tasks.filter(t=>t.assignee_id===profile.id&&t.status==='Done').length,reviewTasks:0,overdueTasks:0,updatesLast30Days:progressUpdates,lastUpdate:null}] : [], summary: {...summary,recordedPrograms:rows.programs.filter(p=>p.progress!=null).length,totalPrograms:rows.programs.length,completedPrograms:rows.programs.filter(p=>p.status==='Completed').length,completedTasks:rows.tasks.filter(t=>t.status==='Done').length,pendingTasks:rows.tasks.filter(t=>t.status!=='Done').length}, monthly: [{ month: 10, income: 0, expense: 0 }], inventory: [{ status: 'Available', quantity: 3 }], upcomingPrograms: [] });
+  if (path === 'dashboard'||path==='dashboard/overview') return reply({ overview: {proker: rows.programs.filter(p=>p.kind==='Proker').length, ukor: rows.programs.filter(p=>p.kind==='UKOR').length, openTasks: rows.tasks.filter(t=>t.status!=='Done').length, overdueTasks:0}, programFocus: rows.programs.slice(0,30), programStatusCounts: Object.values(rows.programs.reduce((acc,p)=>{const key=p.kind+p.status;acc[key] ||= {kind:p.kind,status:p.status,count:0};acc[key].count++;return acc;},{})), upcomingMilestones: rows.programs.filter(p=>p.milestone_date), attentionTasks: rows.tasks.filter(t=>t.status!=='Done'), staffPerformance: role==='member' ? [{id:profile.id,name:profile.name,programs:rows.programs.filter(p=>p.assignee_ids?.includes(profile.id)),assignedTasks:rows.tasks.filter(t=>t.assignee_id===profile.id).length,completedTasks:rows.tasks.filter(t=>t.assignee_id===profile.id&&t.status==='Done').length,reviewTasks:0,overdueTasks:0,updatesLast30Days:progressUpdates,lastUpdate:null}] : [], summary: {...summary,recordedPrograms:rows.programs.filter(p=>p.progress!=null).length,totalPrograms:rows.programs.length,completedPrograms:rows.programs.filter(p=>p.status==='Completed').length,completedTasks:rows.tasks.filter(t=>t.status==='Done').length,pendingTasks:rows.tasks.filter(t=>t.status!=='Done').length}, monthly: [{ month: 10, income: 0, expense: 0 }], inventory: [{ status: 'Available', quantity: 3 }], upcomingPrograms: [] });
 
   function filteredTasks() {
    let records=rows.tasks;
@@ -28,10 +28,17 @@ async function mockApi(page, role = 'staff') {
    if(scope==='overdue')records=records.filter(t=>t.status!=='Done'&&t.due_date&&t.due_date<'2026-10-19');
    return records;
   }
-  if(path==='tasks/summary') {
+  if(/^tasks\/[^/]+$/.test(path)&&!['tasks/board','tasks/summary'].includes(path)&&req.method()==='GET') {
+   const task=rows.tasks.find(t=>t.id===path.split('/')[1]);return task?reply(task):reply('Tugas tidak ditemukan.',404);
+  }
+  if(path==='directory')return reply({profiles:[profile,...extraProfiles],programs:rows.programs.filter(p=>role!=='member'||p.assignee_ids?.includes(profile.id)).map(({id,name,assignee_ids})=>({id,name,assignee_ids}))});
+  if(path==='tasks/summary'||path==='tasks/board') {
    const tasks=filteredTasks();const statuses={};const workload={};
    for(const t of tasks){statuses[t.status]=(statuses[t.status]||0)+1;const id=t.assignee_id||'unassigned';workload[id] ||= {assignee_id:t.assignee_id||null,total:0,done:0,open:0,overdue:0};const w=workload[id];w.total++;t.status==='Done'?w.done++:w.open++;if(t.status!=='Done'&&t.due_date&&t.due_date<'2026-10-19')w.overdue++;}
-   return reply({total:tasks.length,done:tasks.filter(t=>t.status==='Done').length,overdue:tasks.filter(t=>t.status!=='Done'&&t.due_date&&t.due_date<'2026-10-19').length,unassigned:tasks.filter(t=>!t.assignee_id).length,statuses,workload:role==='member'?[]:Object.values(workload)});
+   const summary={total:tasks.length,done:tasks.filter(t=>t.status==='Done').length,overdue:tasks.filter(t=>t.status!=='Done'&&t.due_date&&t.due_date<'2026-10-19').length,unassigned:tasks.filter(t=>!t.assignee_id).length,statuses,workload:role==='member'?[]:Object.values(workload)};
+   if(path==='tasks/summary')return reply(summary);
+   const pages=(url.searchParams.get('pages')||'0,0,0,0,0').split(',').map(Number);
+   return reply({summary,columns:Object.fromEntries(['Backlog','To Do','In Progress','Review','Done'].map((status,i)=>{const records=tasks.filter(t=>t.status===status),index=pages[i]*12;return[status,{items:records.slice(index,index+12).map(t=>{const row={...t};delete row.description;return row;}),hasMore:records.length>index+12}];}))});
   }
   if(/^programs\/[^/]+/.test(path)) {
    const [,programId,child,childId]=path.split('/'); const program=rows.programs.find(p=>p.id===programId);
@@ -581,7 +588,26 @@ test('directory signed URLs refresh before expiry without reloading tasks',async
 
 test('program directory failure retains program and retries account identities',async({page})=>{
  const mock=await mockApi(page);seedTeamPhoto(mock);let unavailable=true;
- await page.route(url=>url.pathname==='/api/profiles',route=>unavailable?route.fulfill({status:503,json:{error:{message:'Profile directory unavailable'}}}):route.fallback());
+ await page.route(url=>url.pathname==='/api/directory',route=>unavailable?route.fulfill({status:503,json:{error:{message:'Profile directory unavailable'}}}):route.fallback());
  await login(page);await page.goto('/programs/photo-program');await expect(page.getByRole('heading',{name:'Photo program',exact:true})).toBeVisible();await expect(page.getByRole('alert')).toContainText('Daftar akun tidak tersedia');
  unavailable=false;await page.getByRole('button',{name:'Coba lagi',exact:true}).click();await expect(page.locator('.program-members')).toContainText('Photo Teammate');await expect(page.locator('.program-members').getByRole('img',{name:'Foto profil Photo Teammate',exact:true})).toBeVisible();await expect(page.getByRole('alert')).toHaveCount(0);
+});
+
+test('cold board batches five columns and summary without full collections',async({page})=>{
+ const mock=await mockApi(page);await login(page);await page.goto('/tasks');await expect(page.getByRole('heading',{name:'Review proposal',exact:true})).toBeVisible();await expect(page.getByLabel('Filter akun PJ').locator('option')).toHaveCount(2);
+ expect(mock.counts['GET tasks/board']).toBe(1);expect(mock.counts['GET directory']).toBe(1);expect(mock.counts['GET tasks/summary']).toBeUndefined();expect(mock.counts['GET tasks']).toBeUndefined();expect(mock.counts['GET profiles']).toBeUndefined();expect(mock.counts['GET programs']).toBeUndefined();
+});
+test('compact task cards load full details before edit and preserve description',async({page})=>{
+ const mock=await mockApi(page);const description='Full description retained. '.repeat(50);mock.rows.tasks[0].description=description;await login(page);await page.goto('/tasks');const card=page.locator('.work-task').filter({hasText:'Review proposal'});
+ await card.getByRole('button',{name:'Edit',exact:true}).click();await expect(page.getByLabel('Deskripsi',{exact:true})).toHaveValue(description);await page.getByLabel('Judul',{exact:true}).fill('Edited compact task');await page.getByRole('button',{name:'Simpan',exact:true}).click();await expect(page.getByRole('heading',{name:'Edited compact task',exact:true})).toBeVisible();expect(mock.rows.tasks[0].description).toBe(description);expect(mock.counts['GET tasks/task-id']).toBe(1);
+});
+test('failed detail read retains compact board and never opens an empty editor',async({page})=>{
+ await mockApi(page);await page.route(url=>url.pathname==='/api/tasks/task-id',route=>route.request().method()==='GET'?route.fulfill({status:404,json:{error:{message:'Tugas tidak ditemukan.'}}}):route.fallback());await login(page);await page.goto('/tasks');await page.locator('.work-task').getByRole('button',{name:'Edit',exact:true}).click();await expect(page.getByRole('alert')).toContainText('Tugas tidak ditemukan.');await expect(page.getByRole('dialog')).toHaveCount(0);await expect(page.getByRole('heading',{name:'Review proposal',exact:true})).toBeVisible();
+});
+
+test('one failed board snapshot reports one retry action and retains filters',async({page})=>{
+ await mockApi(page);let unavailable=true;
+ await page.route(url=>url.pathname==='/api/tasks/board',route=>unavailable?route.fulfill({status:503,json:{error:{message:'Snapshot unavailable'}}}):route.fallback());
+ await login(page);await page.goto('/tasks');await expect(page.getByRole('alert')).toHaveCount(1);await expect(page.getByRole('alert')).toContainText('Snapshot unavailable');const failedFiltered=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/tasks/board'&&new URL(r.url()).searchParams.get('priority')==='Medium'&&r.status()===503);await page.getByLabel('Filter prioritas').selectOption('Medium');await failedFiltered;await expect(page.getByRole('alert')).toContainText('Snapshot unavailable');
+ unavailable=false;await page.getByRole('button',{name:'Coba lagi',exact:true}).click();await expect(page.getByRole('heading',{name:'Review proposal',exact:true})).toBeVisible();await expect(page.getByLabel('Filter prioritas')).toHaveValue('Medium');await expect(page.getByRole('alert')).toHaveCount(0);
 });
