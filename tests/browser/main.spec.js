@@ -5,7 +5,7 @@ async function mockApi(page, role = 'staff') {
  let signedIn = false; const counts = {}; const extraProfiles=[];
  let profile = { ...user, role, departmentRole: role === 'member' ? 'staff' : 'bph' };
  let failEvent = false; let failProfile = false; let failPhoto = false; let failPassword = false;
- const rows = { events: [], programs: [], finances: [], inventory: [], tasks: [{ id: 'task-id', title: 'Review proposal', description: '', status: 'To Do', priority: 'Medium', program_id: null, assignee_id: user.id, due_date: null, created_by: user.id }] };
+ const rows = { events: [], programs: [], finances: [], inventory: [], tasks: [{ id: 'task-id', title: 'Review proposal', description: '', status: 'To Do', priority: 'Medium', program_id: 'task-program', assignee_id: user.id, due_date: null, created_by: user.id }] };
  const notes = []; const milestones = []; const timeline = [];
  let failAvatarDirectory = false;
  let failTask = false; let failProgress = false; let progressUpdates = 0;
@@ -22,6 +22,7 @@ async function mockApi(page, role = 'staff') {
    let records=rows.tasks;
    const q=url.searchParams.get('q')?.toLowerCase();if(q) records=records.filter(t=>(t.title+' '+(t.description||'')).toLowerCase().includes(q));
    for(const key of ['program_id','assignee_id','priority','status']){const value=url.searchParams.get(key);if(value)records=records.filter(t=>t[key]===value);}
+   const programScope=url.searchParams.get('program_scope');if(programScope==='unlinked')records=records.filter(t=>!t.program_id);if(programScope==='linked')records=records.filter(t=>t.program_id);
    const scope=url.searchParams.get('scope');
    if(scope==='mine')records=records.filter(t=>t.assignee_id===profile.id);
    if(scope==='unassigned')records=records.filter(t=>!t.assignee_id);
@@ -31,11 +32,11 @@ async function mockApi(page, role = 'staff') {
   if(/^tasks\/[^/]+$/.test(path)&&!['tasks/board','tasks/summary'].includes(path)&&req.method()==='GET') {
    const task=rows.tasks.find(t=>t.id===path.split('/')[1]);return task?reply(task):reply('Tugas tidak ditemukan.',404);
   }
-  if(path==='directory')return reply({profiles:[profile,...extraProfiles],programs:rows.programs.filter(p=>role!=='member'||p.assignee_ids?.includes(profile.id)).map(({id,name,assignee_ids})=>({id,name,assignee_ids}))});
+  if(path==='directory')return reply({profiles:[profile,...extraProfiles],programs:rows.programs.filter(p=>role!=='member'||p.assignee_ids?.includes(profile.id)).map(({id,name,kind,assignee_ids})=>({id,name,kind,assignee_ids}))});
   if(path==='tasks/summary'||path==='tasks/board') {
    const tasks=filteredTasks();const statuses={};const workload={};
    for(const t of tasks){statuses[t.status]=(statuses[t.status]||0)+1;const id=t.assignee_id||'unassigned';workload[id] ||= {assignee_id:t.assignee_id||null,total:0,done:0,open:0,overdue:0};const w=workload[id];w.total++;t.status==='Done'?w.done++:w.open++;if(t.status!=='Done'&&t.due_date&&t.due_date<'2026-10-19')w.overdue++;}
-   const summary={total:tasks.length,done:tasks.filter(t=>t.status==='Done').length,overdue:tasks.filter(t=>t.status!=='Done'&&t.due_date&&t.due_date<'2026-10-19').length,unassigned:tasks.filter(t=>!t.assignee_id).length,statuses,workload:role==='member'?[]:Object.values(workload)};
+   const summary={unlinked:tasks.filter(t=>!t.program_id).length,total:tasks.length,done:tasks.filter(t=>t.status==='Done').length,overdue:tasks.filter(t=>t.status!=='Done'&&t.due_date&&t.due_date<'2026-10-19').length,unassigned:tasks.filter(t=>!t.assignee_id).length,statuses,workload:role==='member'?[]:Object.values(workload)};
    if(path==='tasks/summary')return reply(summary);
    const pages=(url.searchParams.get('pages')||'0,0,0,0,0').split(',').map(Number);
    return reply({summary,columns:Object.fromEntries(['Backlog','To Do','In Progress','Review','Done'].map((status,i)=>{const records=tasks.filter(t=>t.status===status),index=pages[i]*12;return[status,{items:records.slice(index,index+12).map(t=>{const row={...t};delete row.description;return row;}),hasMore:records.length>index+12}];}))});
@@ -84,6 +85,7 @@ async function mockApi(page, role = 'staff') {
    return reply(records.slice(index,index+size),200,{hasMore:records.length>index+size});
   }
   if (req.method() === 'PUT' && resource === 'tasks' && failTask) return reply('Database unavailable', 503);
+  if(resource==='tasks' && (req.method()==='POST'||(req.method()==='PUT'&&path.split('/').length===2)) && !req.postDataJSON().program_id)return reply('Pilih Proker/UKOR untuk tugas ini.',400);
   if (req.method() === 'POST') { const data = { ...req.postDataJSON(), id: `${resource}-id`, created_by: user.id };rows[resource].push(data);return reply(data,201); }
   if (req.method() === 'PUT') { const data = { ...rows[resource].find(row => row.id === id), ...req.postDataJSON() };rows[resource] = rows[resource].map(row => row.id === id ? data : row);return reply(data); }
   if (req.method() === 'DELETE') { rows[resource] = rows[resource].filter(row => row.id !== id);return reply({ deleted: true }); }
@@ -126,12 +128,13 @@ test('failed task update displays error and retains old board status', async ({ 
  await expect(page.getByLabel('Status Review proposal')).toHaveValue('To Do');
 });
 test('Staff has read-only program controls and can create own tasks', async ({ page }) => {
- await mockApi(page,'member'); await login(page);
+ const mock=await mockApi(page,'member'); mock.rows.programs.push({id:'task-program',name:'Development Proker',kind:'Proker',status:'Planning',assignee_ids:[user.id]}); await login(page);
  await page.getByRole('link', { name: 'Program', exact: true }).click();
  await expect(page.getByRole('button', { name: 'Tambah program' })).toHaveCount(0);
  await page.getByRole('link', { name: 'Tugas', exact: true }).click();
  await page.getByRole('button', { name: 'Tambah tugas', exact: true }).click();
  await page.getByLabel('Judul').fill('Member task');
+ await page.getByRole('dialog').getByLabel('Program',{exact:true}).selectOption('task-program');
  await expect(page.getByLabel('Penanggung jawab')).toHaveCount(0);
  await page.getByRole('button', { name: 'Simpan', exact: true }).click();
  await expect(page.getByRole('heading', { name: 'Member task' })).toBeVisible();
@@ -598,7 +601,7 @@ test('cold board batches five columns and summary without full collections',asyn
  expect(mock.counts['GET tasks/board']).toBe(1);expect(mock.counts['GET directory']).toBe(1);expect(mock.counts['GET tasks/summary']).toBeUndefined();expect(mock.counts['GET tasks']).toBeUndefined();expect(mock.counts['GET profiles']).toBeUndefined();expect(mock.counts['GET programs']).toBeUndefined();
 });
 test('compact task cards load full details before edit and preserve description',async({page})=>{
- const mock=await mockApi(page);const description='Full description retained. '.repeat(50);mock.rows.tasks[0].description=description;await login(page);await page.goto('/tasks');const card=page.locator('.work-task').filter({hasText:'Review proposal'});
+ const mock=await mockApi(page);mock.rows.programs.push({id:'task-program',name:'Development Proker',kind:'Proker',assignee_ids:[user.id]});const description='Full description retained. '.repeat(50);mock.rows.tasks[0].description=description;await login(page);await page.goto('/tasks');const card=page.locator('.work-task').filter({hasText:'Review proposal'});
  await card.getByRole('button',{name:'Edit',exact:true}).click();await expect(page.getByLabel('Deskripsi',{exact:true})).toHaveValue(description);await page.getByLabel('Judul',{exact:true}).fill('Edited compact task');await page.getByRole('button',{name:'Simpan',exact:true}).click();await expect(page.getByRole('heading',{name:'Edited compact task',exact:true})).toBeVisible();expect(mock.rows.tasks[0].description).toBe(description);expect(mock.counts['GET tasks/task-id']).toBe(1);
 });
 test('failed detail read retains compact board and never opens an empty editor',async({page})=>{
@@ -610,4 +613,28 @@ test('one failed board snapshot reports one retry action and retains filters',as
  await page.route(url=>url.pathname==='/api/tasks/board',route=>unavailable?route.fulfill({status:503,json:{error:{message:'Snapshot unavailable'}}}):route.fallback());
  await login(page);await page.goto('/tasks');await expect(page.getByRole('alert')).toHaveCount(1);await expect(page.getByRole('alert')).toContainText('Snapshot unavailable');const failedFiltered=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/tasks/board'&&new URL(r.url()).searchParams.get('priority')==='Medium'&&r.status()===503);await page.getByLabel('Filter prioritas').selectOption('Medium');await failedFiltered;await expect(page.getByRole('alert')).toContainText('Snapshot unavailable');
  unavailable=false;await page.getByRole('button',{name:'Coba lagi',exact:true}).click();await expect(page.getByRole('heading',{name:'Review proposal',exact:true})).toBeVisible();await expect(page.getByLabel('Filter prioritas')).toHaveValue('Medium');await expect(page.getByRole('alert')).toHaveCount(0);
+});
+
+for(const width of [375,1440])test(`small program tasks require a parent and legacy tasks can be linked at ${width}px`,async({page},testInfo)=>{
+ await page.setViewportSize({width,height:900});const mock=await mockApi(page);
+ mock.rows.tasks[0].program_id=null;mock.rows.tasks[0].description='Keep this legacy description';
+ mock.rows.programs.push({id:'task-proker',name:'Fixture Tournament',kind:'Proker',status:'Planning',assignee_ids:[user.id]},{id:'task-ukor',name:'Fixture Training',kind:'UKOR',status:'Ongoing',assignee_ids:[user.id]});
+ await login(page);await page.goto('/tasks');await expect(page.locator('.task-link-notice')).toContainText('1 tugas lama');
+ await page.getByRole('button',{name:'Tambah tugas',exact:true}).click();await page.getByLabel('Judul',{exact:true}).fill('Confirm court booking');
+ await page.getByRole('button',{name:'Simpan',exact:true}).click();await expect(page.getByRole('dialog')).toBeVisible();expect(mock.counts['POST tasks']).toBeUndefined();
+ expect(await page.getByRole('dialog').getByLabel('Program',{exact:true}).evaluate(el=>el.validity.valueMissing)).toBe(true);
+ await page.getByRole('dialog').getByLabel('Program',{exact:true}).selectOption('task-proker');await page.getByRole('button',{name:'Simpan',exact:true}).click();
+ const card=page.locator('.work-task').filter({has:page.getByRole('heading',{name:'Confirm court booking',exact:true})});
+ await expect(card.getByRole('link',{name:'Proker · Fixture Tournament'})).toBeVisible();expect(mock.rows.tasks.find(t=>t.title==='Confirm court booking').program_id).toBe('task-proker');
+ await page.getByRole('button',{name:'Tampilkan tugas',exact:true}).click();await expect(page.locator('.work-task')).toHaveCount(1);
+ await page.getByRole('button',{name:'Daftar',exact:true}).click();await expect(page.locator('.task-list-view tbody tr')).toHaveCount(1);await expect(page.locator('.task-list-view')).toContainText('Perlu ditautkan');
+ await page.getByRole('button',{name:'Tautkan program',exact:true}).click();await expect(page.getByLabel('Deskripsi',{exact:true})).toHaveValue('Keep this legacy description');
+ await page.getByRole('dialog').getByLabel('Program',{exact:true}).selectOption('task-ukor');await page.getByRole('button',{name:'Simpan',exact:true}).click();await expect(page.locator('.task-list-view tbody tr')).toHaveCount(0);
+ expect(mock.rows.tasks).toHaveLength(2);expect(mock.rows.tasks[0]).toMatchObject({program_id:'task-ukor',assignee_id:user.id,description:'Keep this legacy description',status:'To Do'});
+ await page.getByLabel('Filter program tugas').selectOption('task-ukor');await page.getByRole('button',{name:'Papan',exact:true}).click();await expect(page.locator('.work-task')).toHaveCount(1);
+ await page.getByRole('button',{name:'Tambah tugas Backlog',exact:true}).click();await expect(page.getByRole('dialog').getByLabel('Program',{exact:true})).toHaveValue('task-ukor');await page.getByRole('button',{name:'Batal',exact:true}).click();
+ await page.getByRole('link',{name:'UKOR · Fixture Training',exact:true}).click();await expect(page.getByRole('heading',{name:'Fixture Training',exact:true})).toBeVisible();await page.getByRole('button',{name:'Tugas',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'Review proposal',exact:true})).toBeVisible();await expect(page.getByRole('heading',{name:'Confirm court booking',exact:true})).toHaveCount(0);
+ await page.getByRole('button',{name:'Tugas baru',exact:true}).click();await expect(page.getByRole('dialog')).toContainText('Tugas pelaksanaan · Fixture Training');await expect(page.getByRole('dialog').getByLabel('Program',{exact:true})).toHaveCount(0);await page.getByLabel('Judul',{exact:true}).fill('Prepare equipment');await page.getByRole('button',{name:'Simpan',exact:true}).click();await expect(page.getByRole('heading',{name:'Prepare equipment',exact:true})).toBeVisible();expect(mock.rows.tasks.find(t=>t.title==='Prepare equipment').program_id).toBe('task-ukor');
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:testInfo.outputPath('small-program-tasks.png'),fullPage:true});
 });
