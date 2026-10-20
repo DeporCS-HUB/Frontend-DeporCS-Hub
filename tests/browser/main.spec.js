@@ -638,3 +638,12 @@ for(const width of [375,1440])test(`small program tasks require a parent and leg
  await page.getByRole('button',{name:'Tugas baru',exact:true}).click();await expect(page.getByRole('dialog')).toContainText('Tugas pelaksanaan · Fixture Training');await expect(page.getByRole('dialog').getByLabel('Program',{exact:true})).toHaveCount(0);await page.getByLabel('Judul',{exact:true}).fill('Prepare equipment');await page.getByRole('button',{name:'Simpan',exact:true}).click();await expect(page.getByRole('heading',{name:'Prepare equipment',exact:true})).toBeVisible();expect(mock.rows.tasks.find(t=>t.title==='Prepare equipment').program_id).toBe('task-ukor');
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:testInfo.outputPath('small-program-tasks.png'),fullPage:true});
 });
+
+test('dashboard panel headings follow h1 and own header requests only a small thumbnail',async({page})=>{
+ const mock=await mockApi(page);await login(page);await expect(page.getByRole('heading',{name:'Progres Proker & UKOR',level:2})).toBeVisible();await expect(page.getByRole('heading',{name:'Performa Staff',level:2})).toBeVisible();
+ await page.goto('/settings');await page.getByLabel('Pilih foto profil').setInputFiles({name:'avatar.png',mimeType:'image/png',buffer:photoFixture});
+ const preview=page.getByRole('img',{name:'Pratinjau foto profil'});await expect(preview).toBeVisible();expect(await preview.evaluate(img=>img.naturalWidth)).toBe(256);
+ const requested=page.waitForRequest(r=>new URL(r.url()).pathname==='/api/profiles/me/avatar'&&new URL(r.url()).searchParams.get('size')==='96');
+ await page.getByRole('button',{name:'Simpan foto',exact:true}).click();await requested;
+ await expect(page.locator('.topbar img')).toHaveAttribute('width','30');await expect(page.locator('.topbar img')).toHaveAttribute('height','30');expect(mock.counts['PUT profiles/me/avatar']).toBe(1);
+});

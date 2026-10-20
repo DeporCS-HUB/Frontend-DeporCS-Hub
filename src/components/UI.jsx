@@ -52,7 +52,7 @@ export function Progress({ value, status }) {
 export function PanelTitle({ title, action }) {
   return (
     <div className="panel-title">
-      <h3>{title}</h3>
+      <h2>{title}</h2>
       {action}
     </div>
   );

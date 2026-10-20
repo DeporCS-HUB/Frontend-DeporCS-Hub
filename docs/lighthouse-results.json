@@ -1,0 +1,191 @@
+{
+  "fixture": {
+    "profiles": 17,
+    "programs": 14,
+    "tasks": 100,
+    "apiDelayMs": 400,
+    "cpuSlowdown": 4,
+    "latencyMs": 150,
+    "downloadMbps": 1.6,
+    "runs": 3
+  },
+  "navigation": [
+    {
+      "route": "/",
+      "run": 1,
+      "readyMs": 2436,
+      "coldApiRequests": 2
+    },
+    {
+      "route": "/",
+      "run": 2,
+      "readyMs": 2328,
+      "coldApiRequests": 2
+    },
+    {
+      "route": "/",
+      "run": 3,
+      "readyMs": 2286,
+      "coldApiRequests": 2
+    },
+    {
+      "route": "/programs",
+      "run": 1,
+      "readyMs": 2145,
+      "coldApiRequests": 3
+    },
+    {
+      "route": "/programs",
+      "run": 2,
+      "readyMs": 2158,
+      "coldApiRequests": 3
+    },
+    {
+      "route": "/programs",
+      "run": 3,
+      "readyMs": 2161,
+      "coldApiRequests": 3
+    },
+    {
+      "route": "/tasks",
+      "run": 1,
+      "readyMs": 2163,
+      "coldApiRequests": 3,
+      "warmReturnMs": 162
+    },
+    {
+      "route": "/tasks",
+      "run": 2,
+      "readyMs": 2178,
+      "coldApiRequests": 3,
+      "warmReturnMs": 177
+    },
+    {
+      "route": "/tasks",
+      "run": 3,
+      "readyMs": 2240,
+      "coldApiRequests": 3,
+      "warmReturnMs": 187
+    }
+  ],
+  "lighthouse": [
+    {
+      "route": "/login",
+      "run": 1,
+      "score": 100,
+      "accessibility": 100,
+      "bestPractices": 96,
+      "seo": 100,
+      "headingOrder": 1,
+      "robots": 1,
+      "lcpMs": 1369.437,
+      "tbtMs": 0,
+      "cls": 0.024417999397748608
+    },
+    {
+      "route": "/login",
+      "run": 2,
+      "score": 100,
+      "accessibility": 100,
+      "bestPractices": 96,
+      "seo": 100,
+      "headingOrder": 1,
+      "robots": 1,
+      "lcpMs": 1368.526,
+      "tbtMs": 0,
+      "cls": 0.024417999397748608
+    },
+    {
+      "route": "/login",
+      "run": 3,
+      "score": 100,
+      "accessibility": 100,
+      "bestPractices": 96,
+      "seo": 100,
+      "headingOrder": 1,
+      "robots": 1,
+      "lcpMs": 1367.09,
+      "tbtMs": 0,
+      "cls": 0.024417999397748608
+    },
+    {
+      "route": "/",
+      "run": 1,
+      "score": 99,
+      "accessibility": 100,
+      "bestPractices": 100,
+      "seo": 100,
+      "headingOrder": 1,
+      "robots": 1,
+      "lcpMs": 1686.828,
+      "tbtMs": 0,
+      "cls": 0
+    },
+    {
+      "route": "/",
+      "run": 2,
+      "score": 99,
+      "accessibility": 100,
+      "bestPractices": 100,
+      "seo": 100,
+      "headingOrder": 1,
+      "robots": 1,
+      "lcpMs": 1741.296,
+      "tbtMs": 9.5,
+      "cls": 0
+    },
+    {
+      "route": "/",
+      "run": 3,
+      "score": 99,
+      "accessibility": 100,
+      "bestPractices": 100,
+      "seo": 100,
+      "headingOrder": 1,
+      "robots": 1,
+      "lcpMs": 1692.44,
+      "tbtMs": 0,
+      "cls": 0
+    },
+    {
+      "route": "/tasks",
+      "run": 1,
+      "score": 98,
+      "accessibility": 100,
+      "bestPractices": 100,
+      "seo": 100,
+      "headingOrder": 1,
+      "robots": 1,
+      "lcpMs": 1999.07,
+      "tbtMs": 24.5,
+      "cls": 0
+    },
+    {
+      "route": "/tasks",
+      "run": 2,
+      "score": 99,
+      "accessibility": 100,
+      "bestPractices": 100,
+      "seo": 100,
+      "headingOrder": 1,
+      "robots": 1,
+      "lcpMs": 1990.8525000000002,
+      "tbtMs": 24.5,
+      "cls": 0
+    },
+    {
+      "route": "/tasks",
+      "run": 3,
+      "score": 98,
+      "accessibility": 100,
+      "bestPractices": 100,
+      "seo": 100,
+      "headingOrder": 1,
+      "robots": 1,
+      "lcpMs": 1992.0625000000002,
+      "tbtMs": 26,
+      "cls": 0
+    }
+  ],
+  "initialJsGzipBytes": 85504
+}
