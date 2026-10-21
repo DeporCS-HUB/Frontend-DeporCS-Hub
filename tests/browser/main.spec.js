@@ -160,7 +160,7 @@ test('inventory and finance creation use API-backed forms', async ({ page }) => 
  await page.getByLabel('Nominal (Rp)',{exact:true}).fill('100000');
  await page.getByLabel('Kategori',{exact:true}).fill('Equipment');
  await page.getByRole('button', { name:'Simpan',exact:true }).click();
- await expect(page.getByRole('cell',{name:'Development purchase'})).toBeVisible();
+ await expect(page.getByRole('cell',{name:'Development purchase',exact:true})).toBeVisible();
 });
 
 test('BPH event CRUD retains permit status after reload', async ({ page }) => {
@@ -251,7 +251,7 @@ test('navigation reuses dashboard summary and a successful write requests a fres
  await page.getByLabel('Nominal (Rp)', { exact: true }).fill('1000');
  await page.getByLabel('Kategori', { exact: true }).fill('Equipment');
  await page.getByRole('button', { name: 'Simpan', exact: true }).click();
- await expect(page.getByRole('cell', { name: 'Refresh summary' })).toBeVisible();
+ await expect(page.getByRole('cell', { name: 'Refresh summary', exact: true })).toBeVisible();
  await expect.poll(() => mock.counts['GET dashboard']).toBe(2);
 });
 test('login form is visible while session restoration waits and submits only after checking', async ({ page }) => {
@@ -692,5 +692,6 @@ for (const width of [375, 1440]) test(`finance separates approval and reimbursem
  await page.getByLabel('Filter status reimburse',{exact:true}).selectOption('pending');await expect(page.getByText('Belum ada data.')).toBeVisible();
  await page.getByLabel('Filter status reimburse',{exact:true}).selectOption('paid');await expect(page.getByRole('cell',{name:'Fixture claim',exact:true})).toBeVisible();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ await page.getByRole('heading',{name:'Keuangan',exact:true}).click();await page.evaluate(()=>window.scrollTo(0,0));
  await page.screenshot({path:testInfo.outputPath('finance.png'),fullPage:true});
 });
