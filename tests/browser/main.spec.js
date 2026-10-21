@@ -87,7 +87,7 @@ async function mockApi(page, role = 'staff') {
    let records = resource === 'profiles' ? [profile,...extraProfiles] : resource === 'tasks' ? filteredTasks() : rows[resource] || [];
    const q = url.searchParams.get('q')?.toLowerCase();
    if(q) records = records.filter(row => Object.values(row).some(v => typeof v === 'string' && v.toLowerCase().includes(q)));
-   for(const key of ['status','kind','priority','permit_status','type','departmentRole']) { const value=url.searchParams.get(key); if(value) records=records.filter(row=>resource==='programs'&&key==='status'&&value==='Ongoing'?['Ongoing','Active'].includes(row.status):row[key]===value); }
+   for(const key of ['status','kind','priority','permit_status','type','reimbursement_status','departmentRole']) { const value=url.searchParams.get(key); if(value) records=records.filter(row=>resource==='programs'&&key==='status'&&value==='Ongoing'?['Ongoing','Active'].includes(row.status):row[key]===value); }
    const size=Number(url.searchParams.get('size')||50), index=Number(url.searchParams.get('page')||0)*size;
    return reply(records.slice(index,index+size),200,{hasMore:records.length>index+size});
   }
@@ -670,4 +670,27 @@ for(const width of [375,1440])test(`program goals evidence, timed agenda and imp
  await page.getByRole('button',{name:'Selesaikan Fixture scheduled match'}).click();expect(mock.milestones[0]).toMatchObject({status:'Done',start_time:'18:30:00',schedule_status:'Tentative',description:'Await updated slot',source_ref:'Fixture workbook G150'});
  await page.getByRole('button',{name:'Timeline',exact:true}).click();await expect(page.locator('.activity-list')).toContainText('Rekonstruksi sumber');await expect(page.locator('.activity-list time')).toHaveAttribute('datetime','2026-10-14');
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.getByRole('button',{name:'Goals & KPI',exact:true}).click();await expect(page.locator('.goal-numbers')).toContainText('0 sesi');await page.screenshot({path:testInfo.outputPath('program-goals.png'),fullPage:true});
+});
+
+for (const width of [375, 1440]) test(`finance separates approval and reimbursement at ${width}px`, async ({page},testInfo) => {
+ await page.setViewportSize({width,height:1000});const mock=await mockApi(page);
+ mock.rows.finances.push({id:'finance-fixture',description:'Fixture claim',type:'expense',amount:12345,category:'Equipment',transaction_date:null,status:'pending',record_kind:'reimbursement_request',reimbursement_status:'pending',notes:'Awaiting an original receipt. '.repeat(80),source_ref:'Fixture source'});
+ await login(page);await page.goto('/finance');
+ await expect(page.getByRole('cell',{name:'Pengajuan reimburse · Pengeluaran',exact:true})).toBeVisible();
+ await expect(page.getByRole('cell',{name:'Menunggu reimburse',exact:true})).toBeVisible();
+ await expect(page.getByRole('cell',{name:'Belum diketahui',exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Detail Fixture claim',exact:true}).click();
+ await expect(page.getByRole('dialog')).toContainText('Awaiting an original receipt.');await page.keyboard.press('Escape');
+ await page.getByRole('button',{name:'Edit',exact:true}).click();
+ await expect(page.getByLabel('Tanggal transaksi',{exact:true})).toHaveValue('');
+ await page.getByLabel('Persetujuan',{exact:true}).selectOption('approved');await page.getByRole('button',{name:'Simpan',exact:true}).click();
+ await expect(page.getByRole('alert')).toContainText('Untuk masuk realisasi');
+ await page.getByLabel('Persetujuan',{exact:true}).selectOption('pending');
+ await page.getByLabel('Status reimburse',{exact:true}).selectOption('paid');await page.getByRole('button',{name:'Simpan',exact:true}).click();
+ await expect(page.getByRole('cell',{name:'Sudah reimburse',exact:true})).toBeVisible();
+ expect(mock.rows.finances[0].status).toBe('pending');expect(mock.rows.finances[0].transaction_date).toBeNull();
+ await page.getByLabel('Filter status reimburse',{exact:true}).selectOption('pending');await expect(page.getByText('Belum ada data.')).toBeVisible();
+ await page.getByLabel('Filter status reimburse',{exact:true}).selectOption('paid');await expect(page.getByRole('cell',{name:'Fixture claim',exact:true})).toBeVisible();
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ await page.screenshot({path:testInfo.outputPath('finance.png'),fullPage:true});
 });
