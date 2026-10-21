@@ -6,7 +6,7 @@ async function mockApi(page, role = 'staff') {
  let profile = { ...user, role, departmentRole: role === 'member' ? 'staff' : 'bph' };
  let failEvent = false; let failProfile = false; let failPhoto = false; let failPassword = false;
  const rows = { events: [], programs: [], finances: [], inventory: [], tasks: [{ id: 'task-id', title: 'Review proposal', description: '', status: 'To Do', priority: 'Medium', program_id: 'task-program', assignee_id: user.id, due_date: null, created_by: user.id }] };
- const notes = []; const milestones = []; const timeline = [];
+ const notes = []; const milestones = []; const timeline = []; const goals = [];
  let failAvatarDirectory = false;
  let failTask = false; let failProgress = false; let progressUpdates = 0;
  await page.route('**/api/**', async route => {
@@ -47,6 +47,13 @@ async function mockApi(page, role = 'staff') {
    if(!child&&req.method()==='GET')return reply(program);
    if(child==='timeline') {const all=timeline.filter(t=>t.program_id===programId);const index=Number(url.searchParams.get('page')||0)*20;return reply({items:all.slice(index,index+20),hasMore:all.length>index+20});}
    if(child==='notes'&&req.method()==='POST') {const note={id:'note-'+notes.length,program_id:programId,actor_id:profile.id,kind:'note',body:req.postDataJSON().body,created_at:new Date().toISOString()};notes.push(note);timeline.unshift(note);return reply(note,201);}
+   if(child==='goals') {
+    if(req.method()==='GET')return reply(goals.filter(g=>g.program_id===programId),200,{hasMore:false});
+    if(req.method()==='POST'){const g={...req.postDataJSON(),id:'g-'+goals.length,program_id:programId};goals.push(g);return reply(g,201);}
+    const g=goals.find(g=>g.id===childId&&g.program_id===programId);if(!g)return reply('Not found',404);
+    if(req.method()==='PUT'){Object.assign(g,req.postDataJSON());return reply(g);}
+    if(req.method()==='DELETE'){goals.splice(goals.indexOf(g),1);return reply({deleted:true});}
+   }
    if(child==='milestones') {
     if(req.method()==='GET'){const all=milestones.filter(m=>m.program_id===programId&&(!url.searchParams.get('status')||m.status===url.searchParams.get('status')));return reply(all,200,{hasMore:false});}
     if(req.method()==='POST'){const m={...req.postDataJSON(),id:'m-'+milestones.length,program_id:programId};milestones.push(m);return reply(m,201);}
@@ -91,7 +98,7 @@ async function mockApi(page, role = 'staff') {
   if (req.method() === 'DELETE') { rows[resource] = rows[resource].filter(row => row.id !== id);return reply({ deleted: true }); }
   return reply('Not found',404);
  });
- return { failAvatarDirectory(){failAvatarDirectory=true;}, failPhoto(){failPhoto=true;}, failPassword(){failPassword=true;}, failEvent() { failEvent = true; }, failProfile() { failProfile = true; }, failTask() { failTask = true; }, failProgress() { failProgress=true; }, profiles:extraProfiles, rows, counts, notes, milestones, timeline };
+ return { failAvatarDirectory(){failAvatarDirectory=true;}, failPhoto(){failPhoto=true;}, failPassword(){failPassword=true;}, failEvent() { failEvent = true; }, failProfile() { failProfile = true; }, failTask() { failTask = true; }, failProgress() { failProgress=true; }, profiles:extraProfiles, rows, counts, notes, milestones, timeline, goals };
 }
 async function login(page) {
  await page.goto('/'); await expect(page).toHaveURL(/login/);
@@ -646,4 +653,21 @@ test('dashboard panel headings follow h1 and own header requests only a small th
  const requested=page.waitForRequest(r=>new URL(r.url()).pathname==='/api/profiles/me/avatar'&&new URL(r.url()).searchParams.get('size')==='96');
  await page.getByRole('button',{name:'Simpan foto',exact:true}).click();await requested;
  await expect(page.locator('.topbar img')).toHaveAttribute('width','30');await expect(page.locator('.topbar img')).toHaveAttribute('height','30');expect(mock.counts['PUT profiles/me/avatar']).toBe(1);
+});
+
+for(const width of [375,1440])test(`program goals evidence, timed agenda and imported timeline at ${width}px`,async({page},testInfo)=>{
+ await page.setViewportSize({width,height:920});const mock=await mockApi(page,'member');
+ mock.rows.programs.push({id:'goal-program',name:'Fixture Badminton',kind:'UKOR',status:'Ongoing',assignee_ids:[user.id]});
+ mock.goals.push({id:'goal-1',program_id:'goal-program',title:'Monthly sessions',metric_type:'count',unit:'sesi',target_value:3,actual_value:null,target_period:'Per bulan',source_ref:'Fixture plan p. 3'});
+ mock.milestones.push({id:'match-1',program_id:'goal-program',title:'Fixture scheduled match',due_date:'2026-10-28',start_time:'18:30:00',end_time:'19:30:00',venue:'Fixture Court',status:'Planned',schedule_status:'Tentative',description:'Await updated slot',source_ref:'Fixture workbook G150'});
+ mock.timeline.push({id:'import-1',program_id:'goal-program',kind:'import',actor_id:user.id,body:'Selection reported complete',occurred_on:'2026-10-14',created_at:'2026-10-21T10:00:00Z',source_ref:'Fixture chat 14 October'});
+ await login(page);await page.goto('/programs/goal-program');await page.getByRole('button',{name:'Goals & KPI',exact:true}).click();
+ await expect(page.locator('.goal-item')).toContainText('Belum ada data');await page.getByRole('button',{name:'Edit indikator'}).click();
+ await expect(page.getByLabel('Nilai realisasi',{exact:true})).toHaveValue('');await page.getByLabel('Nilai realisasi',{exact:true}).fill('0');await page.getByRole('button',{name:'Simpan',exact:true}).click();await expect(page.getByRole('alert')).toContainText('Isi periode');
+ await page.getByLabel('Periode realisasi',{exact:true}).fill('October week 1');await page.getByLabel('Tanggal pengukuran',{exact:true}).fill('2026-10-21');await page.getByLabel('Bukti realisasi',{exact:true}).fill('Verified no session');await page.getByRole('button',{name:'Simpan',exact:true}).click();
+ await expect(page.locator('.goal-numbers')).toContainText('0 sesi');await expect(page.locator('.goal-item')).toContainText('Belum tercapai');await page.reload();await page.getByRole('button',{name:'Goals & KPI',exact:true}).click();await expect(page.locator('.goal-numbers')).toContainText('0 sesi');
+ await page.getByRole('button',{name:'Agenda',exact:true}).click();await expect(page.locator('.milestone-list')).toContainText('18:30–19:30 WIB');await expect(page.locator('.milestone-list')).toContainText('Perlu konfirmasi');
+ await page.getByRole('button',{name:'Selesaikan Fixture scheduled match'}).click();expect(mock.milestones[0]).toMatchObject({status:'Done',start_time:'18:30:00',schedule_status:'Tentative',description:'Await updated slot',source_ref:'Fixture workbook G150'});
+ await page.getByRole('button',{name:'Timeline',exact:true}).click();await expect(page.locator('.activity-list')).toContainText('Rekonstruksi sumber');await expect(page.locator('.activity-list time')).toHaveAttribute('datetime','2026-10-14');
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.getByRole('button',{name:'Goals & KPI',exact:true}).click();await expect(page.locator('.goal-numbers')).toContainText('0 sesi');await page.screenshot({path:testInfo.outputPath('program-goals.png'),fullPage:true});
 });
