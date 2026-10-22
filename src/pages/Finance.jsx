@@ -16,7 +16,7 @@ export default function Finance() {
   return <>
     <PageTitle title="Keuangan" subtitle="Transaksi dan pengajuan dana. Realisasi hanya menghitung transaksi yang disetujui." action={c.manages && <button className="primary" onClick={() => c.setEditor({})}><Plus />Tambah transaksi</button>} />
     <div className="mini-stats">{[['Total anggaran','budget',WalletCards],['Pengeluaran disetujui','expense',Landmark],['Sisa anggaran','remaining',HandCoins],['Pemasukan disetujui','income',TrendingUp]].map(([label,key,Icon]) => <StatCard key={key} icon={<Icon />} title={label} value={summary ? money(summary[key]) : '—'} />)}</div>
-    <Card><PanelTitle title={'Pemasukan & pengeluaran · ' + new Date().getFullYear()} /><DataState loading={stats.loading} error={stats.error} retry={stats.reload} />{stats.data && !stats.loading && !stats.error && <Suspense fallback={<div className="chart"><DataState loading /></div>}><FinanceChart monthly={stats.data.monthly} /></Suspense>}</Card>
+    <Card><PanelTitle title={'Pemasukan & pengeluaran · ' + new Date().getFullYear()} /><p className="muted">Grafik bulanan hanya mencakup transaksi bertanggal.</p><DataState loading={stats.loading} error={stats.error} retry={stats.reload} />{stats.data && !stats.loading && !stats.error && <Suspense fallback={<div className="chart"><DataState loading /></div>}><FinanceChart monthly={stats.data.monthly} /></Suspense>}</Card>
     <Card className="collection-card"><PanelTitle title="Transaksi & pengajuan" />
       <div className="table-tools">
         <input maxLength={120} aria-label="Cari transaksi" placeholder="Cari transaksi…" value={query} onChange={e => setQuery(e.target.value)} />

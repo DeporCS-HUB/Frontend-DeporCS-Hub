@@ -689,6 +689,8 @@ for (const width of [375, 1440]) test(`finance separates approval and reimbursem
  await page.getByLabel('Status reimburse',{exact:true}).selectOption('paid');await page.getByRole('button',{name:'Simpan',exact:true}).click();
  await expect(page.getByRole('cell',{name:'Sudah reimburse',exact:true})).toBeVisible();
  expect(mock.rows.finances[0].status).toBe('pending');expect(mock.rows.finances[0].transaction_date).toBeNull();
+ await page.getByRole('button',{name:'Edit',exact:true}).click();await page.getByLabel('Jenis catatan',{exact:true}).selectOption('transaction');await page.getByLabel('Persetujuan',{exact:true}).selectOption('approved');await page.getByRole('button',{name:'Simpan',exact:true}).click();
+ await expect(page.getByRole('cell',{name:'Disetujui',exact:true})).toBeVisible();expect(mock.rows.finances[0].transaction_date).toBeNull();expect(mock.rows.finances[0].reimbursement_status).toBe('paid');
  await page.getByLabel('Filter status reimburse',{exact:true}).selectOption('pending');await expect(page.getByText('Belum ada data.')).toBeVisible();
  await page.getByLabel('Filter status reimburse',{exact:true}).selectOption('paid');await expect(page.getByRole('cell',{name:'Fixture claim',exact:true})).toBeVisible();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);

@@ -58,7 +58,7 @@ export default function Editor({ resource, item, onClose, onSaved, programId, pr
     if (resource === 'tasks' && !payload.program_id) { setError('Pilih Proker/UKOR untuk tugas pelaksanaan ini.'); setBusy(false); return; }
     if (resource === 'tasks' && !canManage(user)) payload.assignee_id = item?.assignee_id || user.id;
     if (resource === 'goals' && payload.actual_value != null && (!payload.measurement_period?.trim() || !payload.measured_on || !payload.evidence?.trim())) { setError('Isi periode, tanggal pengukuran, dan bukti untuk realisasi.'); setBusy(false); return; }
-    if (resource === 'finances' && payload.status === 'approved' && (payload.record_kind !== 'transaction' || !payload.transaction_date)) { setError('Untuk masuk realisasi, pilih Transaksi dan isi tanggal transaksi dari bukti.'); setBusy(false); return; }
+    if (resource === 'finances' && payload.status === 'approved' && payload.record_kind !== 'transaction') { setError('Untuk masuk realisasi, pilih Transaksi setelah pengeluaran terkonfirmasi.'); setBusy(false); return; }
     // Retain stored legacy icon data when editing; decorative emojis are no longer rendered.
     if (resource === 'inventory') payload.emoji = item?.emoji ?? null;
     try { await api(resource === 'programProgress' ? `/programs/${item.id}/progress` : `${basePath || `/${resource}`}${item?.id ? `/${item.id}` : ''}`, { method: item?.id ? 'PUT' : 'POST', body: JSON.stringify(payload) }); onSaved(); }
