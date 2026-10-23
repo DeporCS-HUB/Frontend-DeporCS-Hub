@@ -2,6 +2,11 @@
 
 Tanggal memakai YYYY-MM-DD. Entri berasal dari riwayat repository dan checkpoint percakapan yang tersedia. Tidak ada nomor versi aplikasi semantik yang direka.
 
+## 2026-10-23 — Latar login memenuhi layar
+
+- Memisahkan latar login selebar viewport dari konten dengan batas 1400 px, sehingga layar besar tidak menampilkan pita warna berbeda di sisi kiri dan kanan. Batas konten mobile tetap 520 px.
+- Validasi: lint, 30 unit test, build, lima browser flow mock terkait login/layout, serta pemeriksaan screenshot dan overflow pada lebar 375, 768, 1440, 1920 dan 2560 px. Tidak mengubah alur autentikasi.
+
 ## 2026-10-19 — Warna status yang mudah dibedakan
 
 - Status memakai hijau (selesai), biru (berjalan), kuning (rencana), abu berarsir (belum diisi), dan merah (batal), terpisah dari identitas biru/merah.
